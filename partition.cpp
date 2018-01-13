@@ -5,19 +5,15 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <stdint.h>
+
+#include "partition.h"
 
 #ifdef __APPLE__
 #define MMAP_FUNC mmap
 #else
 #define MMAP_FUNC mmap64
 #endif
-
-struct Partition {
-    const char* path;
-    int mmapFlags, file;
-    struct stat fileStat;
-    uint8_t* ptr;
-};
 
 bool openPartition(Partition* partition) {
     if(strcmp(partition->path, "/dev/zero") == 0) {
