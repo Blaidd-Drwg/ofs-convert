@@ -11,8 +11,12 @@
 
 #ifdef __APPLE__
 #define MMAP_FUNC mmap
+#define BLKGETSIZE DKIOCGETPHYSICALBLOCKSIZE
+#include <sys/disk.h>
 #else
 #define MMAP_FUNC mmap64
+#define BLKGETSIZE BLKGETSIZE64
+#include <linux/fs.h>
 #endif
 
 bool openPartition(Partition* partition) {
@@ -26,7 +30,7 @@ bool openPartition(Partition* partition) {
             perror("open");
             return false;
         }
-        if (fstat(partition->file, &partition->fileStat)) {
+        if(fstat(partition->file, &partition->fileStat)) {
             perror("fstat");
             return false;
         }
@@ -34,7 +38,10 @@ bool openPartition(Partition* partition) {
             // if(partition->fileStat.st_size == 0)
             //     assert(ftruncate(partition->file, ) == 0);
         } else if(S_ISBLK(partition->fileStat.st_mode) || S_ISCHR(partition->fileStat.st_mode)) {
-
+            if(ioctl(partition->file, BLKGETSIZE, &partition->fileStat.st_size)) {
+                perror("ioctl");
+                return false;
+            }
         } else {
             fprintf(stderr, "Path must be \"/dev/zero\", a file or a device.\n");
             return false;
@@ -42,7 +49,11 @@ bool openPartition(Partition* partition) {
     }
 
     partition->ptr = reinterpret_cast<uint8_t*>(MMAP_FUNC(0, partition->fileStat.st_size, PROT_READ|PROT_WRITE, partition->mmapFlags, partition->file, 0));
-    assert(partition->ptr != MAP_FAILED);
+    if(partition->ptr == MAP_FAILED) {
+        perror("mmap");
+        return false;
+    }
+
     return true;
 }
 
