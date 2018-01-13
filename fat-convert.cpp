@@ -135,7 +135,11 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 	Partition partition = {.path = argv[1]};
-	openPartition(&partition);
+	if (!openPartition(&partition)) {
+		fprintf(stderr, "Failed to open partition");
+		return 1;
+	}
+
 	read_boot_sector(partition.ptr);
 	set_meta_info(partition.ptr);
 	recursive_traverse(boot_sector.root_cluster_no);
