@@ -33,6 +33,10 @@ uint8_t *allocate_block(block_allocator& all) {
             all.blocked_current++;
         }
 
+        if (is_free_cluster(fat[all.entry_index])) {
+            break;
+        }
+
         all.entry_index++;
     }
 
