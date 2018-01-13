@@ -11,11 +11,10 @@
 
 #ifdef __APPLE__
 #define MMAP_FUNC mmap
-#define BLKGETSIZE DKIOCGETPHYSICALBLOCKSIZE
 #include <sys/disk.h>
 #else
 #define MMAP_FUNC mmap64
-#define BLKGETSIZE BLKGETSIZE64
+#include <sys/ioctl.h>
 #include <linux/fs.h>
 #endif
 
@@ -38,10 +37,18 @@ bool openPartition(Partition* partition) {
             // if(partition->fileStat.st_size == 0)
             //     assert(ftruncate(partition->file, ) == 0);
         } else if(S_ISBLK(partition->fileStat.st_mode) || S_ISCHR(partition->fileStat.st_mode)) {
-            if(ioctl(partition->file, BLKGETSIZE, &partition->fileStat.st_size)) {
+            uint64_t size = 0, count = 1;
+            #ifdef __APPLE__
+            if(ioctl(partition->file, DKIOCGETBLOCKSIZE, &size) ||
+               ioctl(partition->file, DKIOCGETBLOCKCOUNT, &count))
+            #else
+            if(ioctl(partition->file, BLKGETSIZE64, &size))
+            #endif
+            {
                 perror("ioctl");
                 return false;
             }
+            partition->fileStat.st_size = size * count;
         } else {
             fprintf(stderr, "Path must be \"/dev/zero\", a file or a device.\n");
             return false;
