@@ -25,6 +25,14 @@ struct extent_lentry {
 	struct extent extent;
 };
 
+uint8_t *fat_entry(uint32_t cluster_no) {
+	return meta_info.fat_start + cluster_no * 4;
+}
+
+uint8_t *cluster_start(uint32_t cluster_no) {
+	return meta_info.data_start + (cluster_no - FAT_START_INDEX) * meta_info.cluster_size;
+}
+
 bool is_dir(struct fat_dentry *dentry) {
 	return dentry->attrs & 0x10;
 }

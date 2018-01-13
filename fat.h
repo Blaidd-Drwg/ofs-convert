@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+// Index in the FAT of the first data cluster
+constexpr uint32_t FAT_START_INDEX = 2;
 constexpr uint32_t CLUSTER_ENTRY_MASK = 0x0FFFFFFF;
 constexpr uint32_t FREE_CLUSTER = 0;
 
@@ -62,13 +64,5 @@ struct fat_dentry {
     uint16_t first_cluster_low;
     uint32_t file_size;
 };
-
-uint8_t *fat_entry(uint32_t cluster_no) {
-	return meta_info.fat_start + cluster_no * 4;
-}
-
-uint8_t *cluster_start(uint32_t cluster_no) {
-	return meta_info.data_start + (cluster_no - 2) * meta_info.cluster_size;
-}
 
 #endif //OFS_CONVERT_FAT_H
