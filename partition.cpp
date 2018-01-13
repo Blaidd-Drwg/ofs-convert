@@ -23,10 +23,13 @@ bool openPartition(Partition* partition) {
         partition->mmapFlags |= MAP_SHARED|MAP_FILE;
         partition->file = open(partition->path, O_RDWR|O_CREAT, 0666);
         if(partition->file < 0) {
-            fprintf(stderr, "Could not open path.\n");
+            perror("open");
             return false;
         }
-        assert(fstat(partition->file, &partition->fileStat) == 0);
+        if (fstat(partition->file, &partition->fileStat)) {
+            perror("fstat");
+            return false;
+        }
         if(S_ISREG(partition->fileStat.st_mode)) {
             // if(partition->fileStat.st_size == 0)
             //     assert(ftruncate(partition->file, ) == 0);
@@ -44,7 +47,10 @@ bool openPartition(Partition* partition) {
 }
 
 void closePartition(Partition* partition) {
-    assert(munmap(partition->ptr, partition->fileStat.st_size) == 0);
+    if (munmap(partition->ptr, partition->fileStat.st_size)) {
+        perror("munmap");
+    }
+
     close(partition->file);
     partition->file = -1;
     partition->ptr = NULL;
