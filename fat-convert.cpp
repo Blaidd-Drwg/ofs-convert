@@ -6,6 +6,10 @@
 #include <stdbool.h>
 
 uint32_t END_OF_CHAIN = 0xFFFFFF8;
+uint32_t ROOT_FIRST_CLUSTER = 2;  // TODO read this from bpb
+uint64_t FAT_START = 0x4000;  // TODO read this from bpb
+uint64_t DATA_START = 0x18DC00;  // TODO read this from bpb
+size_t CLUSTER_SIZE = 0x200;  // TODO read this from bpb
 TAILQ_HEAD(listhead, extent_lentry);
 
 struct extent {
@@ -35,46 +39,6 @@ struct fat_dentry {
 	uint32_t file_size;
 };
 
-struct __attribute__((packed)) boot_sector {
-	uint8_t jump_instruction[3];
-	uint8_t oem_name[8];
-	uint16_t bytes_per_sector;
-	uint8_t sectors_per_cluster;
-	uint16_t sectors_before_fat;
-	uint8_t fat_count;
-	uint16_t dir_entries;
-	uint16_t sector_count;
-	uint8_t media_descriptor;
-	uint16_t unused2;
-	uint16_t sectors_per_disk_track;
-	uint16_t disk_heads;
-	uint32_t hidden_sectors_before_partition;
-	uint32_t total_sectors2;  // used if total_sectors would have overflown;
-	uint32_t sectors_per_fat;
-	uint16_t drive_description_flags;
-	uint16_t version;
-	uint32_t root_cluster_no;
-	uint16_t fs_info_sector_no;
-	uint16_t backup_boot_sector_no;
-	uint8_t reserved[12];
-	uint8_t physical_drive_no;
-	uint8_t reserved2;
-	uint8_t ext_boot_signature;
-	uint32_t volume_id;
-	uint8_t volume_label[11];
-	uint64_t fs_type;
-};
-
-struct meta_info {
-	char *fat_start;
-	uint16_t fat_entries;
-	uint32_t cluster_size;
-	char *data_start;
-};
-
-struct meta_info MetaInfo;
-struct boot_sector BootSector;
-
 bool is_dir(struct fat_dentry *dentry) {
 	return dentry->attrs & 0x10;
 }
@@ -96,11 +60,11 @@ bool is_dot_dir(struct fat_dentry *dentry) {
 }
 
 uint64_t fat_entry(uint32_t cluster_no) {
-	return MetaInfo.fat_start + cluster_no * 4;
+	return FAT_START + cluster_no * 4;
 }
 
 uint64_t cluster_start(uint32_t cluster_no) {
-	return MetaInfo.data_start + (cluster_no - 2) * MetaInfo.cluster_size;
+	return DATA_START + cluster_no * CLUSTER_SIZE;
 }
 
 struct listhead read_extents(uint32_t cluster_no, FILE *fs) {
@@ -140,11 +104,11 @@ char *read_dir(struct listhead extents_list, FILE *fs) {
 		dir_size += it->extent.length;
 	}
 
-	char *dir_data = (char*) malloc(dir_size * MetaInfo.cluster_size);
+	char *dir_data = (char*) malloc(dir_size * CLUSTER_SIZE);
 	for (struct extent_lentry *it = extents_list.tqh_first; it != NULL; it = it->entries.tqe_next) {
 		struct extent current_extent = it->extent;
 		fseek(fs, cluster_start(current_extent.physical_start), SEEK_SET);
-		fread(dir_data + current_extent.logical_start, MetaInfo.cluster_size, current_extent.length, fs);
+		fread(dir_data + current_extent.logical_start, CLUSTER_SIZE, current_extent.length, fs);
 	}
 	return dir_data;
 }
@@ -171,24 +135,11 @@ void recursive_traverse(uint32_t cluster_no, FILE *fs) {
 	}
 }
 
-void read_boot_sector(FILE *fs) {
-	fread(&BootSector, sizeof(struct boot_sector), 1, fs);
-}
-
-void set_meta_info() {
-	MetaInfo.fat_start = BootSector.sectors_before_fat * BootSector.bytes_per_sector;
-	MetaInfo.fat_entries = BootSector.sectors_per_fat / BootSector.sectors_per_cluster;
-	MetaInfo.cluster_size = BootSector.sectors_per_cluster * BootSector.bytes_per_sector;
-	MetaInfo.data_start = MetaInfo.fat_start + BootSector.fat_count * BootSector.sectors_per_fat * BootSector.bytes_per_sector;
-}
-
 int main(int argc, char **argv) {
 	if (argc < 2) {
 		printf("Wrong usage\n");
 		exit(1);
 	}
 	FILE *fs = fopen(argv[1], "r");
-	read_boot_sector(fs);
-	set_meta_info();
-	recursive_traverse(BootSector.root_cluster_no, fs);
+	recursive_traverse(ROOT_FIRST_CLUSTER, fs);
 }
