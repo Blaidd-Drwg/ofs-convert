@@ -39,7 +39,7 @@ bool openPartition(Partition* partition) {
     }
 
     partition->ptr = reinterpret_cast<uint8_t*>(MMAP_FUNC(0, partition->fileStat.st_size, PROT_READ|PROT_WRITE, partition->mmapFlags, partition->file, 0));
-    // partition->mmapFlags |= MAP_FIXED;
+    assert(partition->ptr != MAP_FAILED);
     return true;
 }
 
