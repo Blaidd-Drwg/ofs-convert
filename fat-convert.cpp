@@ -8,7 +8,6 @@
 #include "fat.h"
 #include "partition.h"
 
-uint32_t END_OF_CHAIN = 0xFFFFFF8;
 TAILQ_HEAD(listhead, extent_lentry);
 
 struct boot_sector boot_sector;
@@ -37,20 +36,36 @@ bool is_dir(struct fat_dentry *dentry) {
 	return dentry->attrs & 0x10;
 }
 
-bool is_long_name(struct fat_dentry *dentry) {
+bool is_lfn(struct fat_dentry *dentry) {
 	return dentry->attrs & 0x0F;
 }
 
 bool is_invalid(struct fat_dentry *dentry) {
-	return dentry->short_name[0] == 0xE5;
+	return *(uint8_t *) dentry == 0xE5;
 }
 
 bool is_dir_table_end(struct fat_dentry *dentry) {
-	return dentry->short_name[0] == 0x00;
+	return *(uint8_t *) dentry == 0x00;
 }
 
 bool is_dot_dir(struct fat_dentry *dentry) {
 	return dentry->short_name[0] == '.';
+}
+
+bool is_last_lfn_entry(struct fat_dentry *dentry) {
+	return *(uint8_t *) dentry & 0x40;
+}
+
+void lfn_cpy(uint16_t *dest, struct fat_dentry *src_dentry, uint8_t sequence_no) {
+	uint16_t *dest_start = dest + (sequence_no - 1) * LFN_ENTRY_LENGTH;
+	uint8_t *src = (uint8_t *) src_dentry;
+	memcpy(dest_start, src + 1, 10);
+	memcpy(dest_start + 5, src + 14, 12);
+	memcpy(dest_start + 11, src + 28, 4);
+}
+
+uint8_t lfn_entry_sequence_no(struct fat_dentry *dentry) {
+	return *(uint8_t *) dentry & 0x1F;
 }
 
 struct listhead read_extents(uint32_t cluster_no) {
@@ -60,7 +75,7 @@ struct listhead read_extents(uint32_t cluster_no) {
 
 	uint32_t next_cluster_no = *(uint32_t*) fat_entry(cluster_no);
 
-	while (next_cluster_no < END_OF_CHAIN) {
+	while (next_cluster_no < FAT_END_OF_CHAIN) {
 		if (next_cluster_no == current_extent.physical_start + current_extent.length) {
 			current_extent.length++;
 		} else {
@@ -95,20 +110,28 @@ uint8_t *read_dir(struct listhead extents_list) {
 	return dir_data;
 }
 
-void recursive_traverse(uint32_t cluster_no) {
-	struct listhead root_extents = read_extents(cluster_no);
-	uint8_t *root_data = read_dir(root_extents);
+void recursive_traverse(uint32_t cluster_no, uint16_t *long_name) {
+	struct listhead dir_extents = read_extents(cluster_no);
+	uint8_t *dir_data = read_dir(dir_extents);
 
-	struct fat_dentry *current_dentry = (struct fat_dentry *) root_data;
+	struct fat_dentry *current_dentry = (struct fat_dentry *) dir_data;
 	for (; !is_dir_table_end(current_dentry); current_dentry++) {
-		if (!is_invalid(current_dentry) && !is_long_name(current_dentry)) {
-			if (is_dir(current_dentry)) {
+		if (!is_invalid(current_dentry)) {
+			if (is_lfn(current_dentry)) {
+				uint8_t lfn_sequence_no = lfn_entry_sequence_no(current_dentry);
+				if (is_last_lfn_entry(current_dentry)) {
+					int max_name_length = LFN_ENTRY_LENGTH * lfn_sequence_no + 1;
+					long_name = (uint16_t *) malloc(max_name_length * sizeof(uint16_t));
+					long_name[max_name_length - 1] = 0;
+				}
+				lfn_cpy(long_name, current_dentry, lfn_sequence_no);
+			} else if (is_dir(current_dentry)) {
 				if (!is_dot_dir(current_dentry)) {
 					uint16_t low = current_dentry->first_cluster_low;
 					uint32_t high = current_dentry->first_cluster_high << 16;
 					uint32_t dir_cluster_no = high | low;
 					printf("dir: %.8s\n", current_dentry->short_name);
-					recursive_traverse(dir_cluster_no);
+					recursive_traverse(dir_cluster_no, long_name);
 				}
 			} else {
 				printf("file: %.8s\n", current_dentry->short_name);
@@ -142,5 +165,5 @@ int main(int argc, char **argv) {
 
 	read_boot_sector(partition.ptr);
 	set_meta_info(partition.ptr);
-	recursive_traverse(boot_sector.root_cluster_no);
+	recursive_traverse(boot_sector.root_cluster_no, NULL);
 }

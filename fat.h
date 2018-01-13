@@ -7,6 +7,8 @@
 constexpr uint32_t FAT_START_INDEX = 2;
 constexpr uint32_t CLUSTER_ENTRY_MASK = 0x0FFFFFFF;
 constexpr uint32_t FREE_CLUSTER = 0;
+constexpr uint32_t FAT_END_OF_CHAIN = 0x0FFFFFF8;
+constexpr uint8_t LFN_ENTRY_LENGTH = 13;
 
 extern struct boot_sector boot_sector;
 extern struct meta_info meta_info;
