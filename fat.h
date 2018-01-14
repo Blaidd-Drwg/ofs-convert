@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+void set_meta_info(uint8_t *fs);
+void read_boot_sector(uint8_t *fs);
+void recursive_traverse(uint32_t cluster_no, uint16_t *long_name);
+
 // Index in the FAT of the first data cluster
 constexpr uint32_t FAT_START_INDEX = 2;
 constexpr uint32_t CLUSTER_ENTRY_MASK = 0x0FFFFFFF;
