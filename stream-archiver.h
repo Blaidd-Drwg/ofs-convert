@@ -9,14 +9,15 @@ struct Page {
 };
 
 struct StreamArchiver {
-    struct StreamArchiverHeader {
+    Page* page;
+    uint64_t offsetInPage,
+             elementIndex;
+    struct Header {
         uint64_t elementCount;
     } *header;
-    Page* page;
-    uint64_t offsetInPage;
 };
 
 void cutStreamArchiver(StreamArchiver* stream);
-void* insertInStreamArchiver(StreamArchiver* stream, uint64_t elementLength, uint64_t elementCount = 1);
+void* iterateStreamArchiver(StreamArchiver* stream, bool insert, uint64_t elementLength, uint64_t elementCount = 1);
 
 #endif //OFS_CONVERT_SAR_H
