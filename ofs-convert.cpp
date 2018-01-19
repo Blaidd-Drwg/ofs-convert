@@ -165,6 +165,8 @@ void traverse(StreamArchiver *dir_extent_stream, StreamArchiver *write_stream) {
         read_extents(cluster_no, write_stream);
         if (is_dir(current_dentry)) {
             traverse(&read_extent_stream, write_stream);
+        } else {
+            *reserve_children_count(write_stream) = -1;
         }
 
         (*children_count)++;
