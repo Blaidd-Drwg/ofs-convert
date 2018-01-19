@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+uint64_t pageSize;
+
 void cutStreamArchiver(StreamArchiver* stream) {
     if(stream->header && stream->page)
         stream->header->elementCount = stream->elementIndex;

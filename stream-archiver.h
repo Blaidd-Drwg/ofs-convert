@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-uint64_t pageSize;
+extern uint64_t pageSize;
 struct Page {
     struct Page* next;
 };

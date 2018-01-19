@@ -7,6 +7,21 @@ void set_meta_info(uint8_t *fs);
 void read_boot_sector(uint8_t *fs);
 void recursive_traverse(uint32_t cluster_no, uint16_t *long_name);
 
+bool is_lfn(struct fat_dentry *dentry);
+bool is_dir(struct fat_dentry *dentry);
+bool is_invalid(struct fat_dentry *dentry);
+bool is_dir_table_end(struct fat_dentry *dentry);
+bool is_dir_table_end(struct fat_dentry *dentry);
+bool is_last_lfn_entry(struct fat_dentry *dentry);
+bool is_dot_dir(struct fat_dentry *dentry);
+bool has_lower_name(struct fat_dentry *dentry);
+bool has_lower_extension(struct fat_dentry *dentry);
+bool has_extension(struct fat_dentry *dentry);
+uint8_t lfn_entry_sequence_no(struct fat_dentry *dentry);
+uint32_t file_cluster_no(struct fat_dentry *dentry);
+uint8_t *fat_entry(uint32_t cluster_no);
+uint8_t *cluster_start(uint32_t cluster_no);
+
 // Index in the FAT of the first data cluster
 constexpr uint32_t FAT_START_INDEX = 2;
 constexpr uint32_t CLUSTER_ENTRY_MASK = 0x0FFFFFFF;
@@ -47,6 +62,12 @@ struct __attribute__((packed)) boot_sector {
     uint64_t fs_type;
 };
 
+struct extent {  // TODO: not here
+    uint32_t logical_start;  // First file cluster number that this extent covers
+    uint32_t length;  // Number of clusters covered by extent
+    uint32_t physical_start;  // Physical cluster number to which this extent points
+};
+
 struct meta_info {
     uint8_t* fs_start;
     uint8_t* fat_start;
@@ -59,7 +80,7 @@ struct fat_dentry {
     uint8_t short_name[8];
     uint8_t short_extension[3];
     uint8_t attrs;
-    uint8_t long_name_case;
+    uint8_t short_name_case;
     uint8_t create_time_10_ms;
     uint16_t create_time;
     uint16_t create_date;

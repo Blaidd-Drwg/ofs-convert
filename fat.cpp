@@ -13,12 +13,6 @@ TAILQ_HEAD(extent_list, extent_lentry);
 struct boot_sector boot_sector;
 struct meta_info meta_info;
 
-struct extent {
-    uint32_t logical_start;  // First file cluster number that this extent covers
-    uint32_t length;  // Number of clusters covered by extent
-    uint32_t physical_start;  // Physical cluster number to which this extent points
-};
-
 struct extent_lentry {
     TAILQ_ENTRY(extent_lentry) entries;
     struct extent extent;
@@ -60,6 +54,18 @@ bool is_dot_dir(struct fat_dentry *dentry) {
 
 bool is_last_lfn_entry(struct fat_dentry *dentry) {
     return *(uint8_t *) dentry & 0x40;
+}
+
+bool has_lower_name(struct fat_dentry *dentry) {
+    return dentry->short_name_case & 0x8;
+}
+
+bool has_lower_extension(struct fat_dentry *dentry) {
+    return dentry->short_name_case & 0x10;
+}
+
+bool has_extension(struct fat_dentry *dentry) {
+    return dentry->short_extension[0] != ' ';
 }
 
 void lfn_cpy(uint16_t *dest, struct fat_dentry *src_dentry, uint8_t sequence_no) {
