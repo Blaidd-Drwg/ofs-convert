@@ -73,6 +73,7 @@ struct meta_info {
     uint8_t* fat_start;
     uint16_t fat_entries;
     uint32_t cluster_size;
+    uint32_t dentries_per_cluster;
     uint8_t* data_start;
 };
 

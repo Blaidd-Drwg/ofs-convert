@@ -7,14 +7,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-int dentries_per_cluster = meta_info.cluster_size / sizeof(struct fat_dentry);
 extern uint64_t pageSize;
 
 struct read_state {
     struct extent current_extent;
     uint32_t extent_cluster;
     struct fat_dentry *current_cluster;
-    int cluster_dentry;
+    uint32_t cluster_dentry;
 };
 
 struct fat_dentry *init_read_state(StreamArchiver *extent_stream, struct read_state *state) {
@@ -28,7 +27,7 @@ struct fat_dentry *init_read_state(StreamArchiver *extent_stream, struct read_st
 
 struct fat_dentry *next_dentry(StreamArchiver *extent_stream, struct read_state *state) {
     state->cluster_dentry++;
-    if (state->cluster_dentry < dentries_per_cluster) {
+    if (state->cluster_dentry < meta_info.dentries_per_cluster) {
         return state->current_cluster + state->cluster_dentry;
     }
 
@@ -197,7 +196,6 @@ int main(int argc, char **argv) {
 
     read_boot_sector(partition.ptr);
     set_meta_info(partition.ptr);
-    dentries_per_cluster = meta_info.cluster_size / sizeof(struct fat_dentry);
 
     StreamArchiver stream;
     init_stream_archiver(&stream);

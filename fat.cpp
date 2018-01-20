@@ -165,5 +165,6 @@ void set_meta_info(uint8_t *fs) {
     meta_info.fat_start = fs + boot_sector.sectors_before_fat * boot_sector.bytes_per_sector;
     meta_info.fat_entries = boot_sector.sectors_per_fat / boot_sector.sectors_per_cluster;
     meta_info.cluster_size = boot_sector.sectors_per_cluster * boot_sector.bytes_per_sector;
+    meta_info.dentries_per_cluster = meta_info.cluster_size / sizeof(struct fat_dentry);
     meta_info.data_start = meta_info.fat_start + boot_sector.fat_count * boot_sector.sectors_per_fat * boot_sector.bytes_per_sector;
 }
