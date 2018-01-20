@@ -94,7 +94,7 @@ void read_extents(uint32_t cluster_no, StreamArchiver *write_stream) {
     }
 }
 
-struct fat_dentry *read_lfn(struct fat_dentry *first_entry, StreamArchiver *extent_stream, uint16_t *name[], uint8_t lfn_entry_count, struct cluster_read_state *state) {
+struct fat_dentry *read_lfn(struct fat_dentry *first_entry, StreamArchiver *extent_stream, uint16_t *name[], int lfn_entry_count, struct cluster_read_state *state) {
     uint8_t *entry = (uint8_t *) first_entry;
     for (int i = lfn_entry_count - 1; i >= 0; i--) {
         lfn_cpy(name[i], entry);
@@ -112,7 +112,7 @@ void traverse(StreamArchiver *dir_extent_stream, StreamArchiver *write_stream) {
     while (!is_dir_table_end(current_dentry)) {
         bool has_long_name = is_lfn(current_dentry);
         if (has_long_name) {
-            uint8_t lfn_entry_count = lfn_entry_sequence_no(current_dentry);
+            int lfn_entry_count = lfn_entry_sequence_no(current_dentry);
             uint16_t *name[lfn_entry_count];
             reserve_name(name, lfn_entry_count, write_stream);
             current_dentry = read_lfn(current_dentry, dir_extent_stream, name, lfn_entry_count, &state);
@@ -136,10 +136,6 @@ void traverse(StreamArchiver *dir_extent_stream, StreamArchiver *write_stream) {
 
         (*children_count)++;
         current_dentry = next_dentry(dir_extent_stream, &state);
-
-        while (is_invalid(current_dentry) || is_dot_dir(current_dentry)) {
-            current_dentry = next_dentry(dir_extent_stream, &state);
-        }
     }
 }
 
