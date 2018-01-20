@@ -14,6 +14,7 @@ extern extent_allocator allocator;
 
 void init_extent_allocator();
 extent allocate_extent(uint32_t max_length);
-uint32_t find_blocked_extents(uint32_t physical_address);
+uint32_t find_first_blocked_extent(uint32_t physical_address);
+extent* find_next_blocked_extent(uint32_t& i, uint32_t physical_end);
 
 #endif //OFS_CONVERT_BLOCK_ALLOCATE_H

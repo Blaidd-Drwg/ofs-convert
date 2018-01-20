@@ -34,7 +34,7 @@ extent allocate_extent(uint32_t max_length) {
     return result;
 }
 
-uint32_t find_blocked_extents(uint32_t physical_address) {
+uint32_t find_first_blocked_extent(uint32_t physical_address) {
     uint32_t begin = 0, mid, end = allocator.blocked_extent_count;
     while(begin < end) {
         mid = (begin+end)/2;
@@ -45,4 +45,13 @@ uint32_t find_blocked_extents(uint32_t physical_address) {
             end = mid;
     }
     return begin;
+}
+
+extent* find_next_blocked_extent(uint32_t& i, uint32_t physical_end) {
+    if(i >= allocator.blocked_extent_count)
+        return NULL;
+    extent* blocked_extent = &allocator.blocked_extents[i++];
+    if(physical_end < blocked_extent->physical_start)
+        return NULL;
+    return blocked_extent;
 }
