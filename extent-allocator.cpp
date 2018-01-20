@@ -22,13 +22,15 @@ bool can_be_used() {
     return false;
 }
 
-extent allocate_extent(uint32_t& remaining_count) {
+extent allocate_extent(uint32_t max_length) {
     while(!can_be_used());
     extent result;
     result.physical_start = allocator.index_in_fat;
-    while(can_be_used());
-    result.length = allocator.index_in_fat - result.physical_start;
-    remaining_count -= result.length;
+    while(can_be_used()) {
+        result.length = allocator.index_in_fat - result.physical_start;
+        if(result.length == max_length)
+            break;
+    }
     return result;
 }
 

@@ -77,8 +77,14 @@ uint32_t* reserve_children_count(StreamArchiver* write_stream) {
     return reinterpret_cast<uint32_t*>(ptr);
 }
 
-void move_extent(extent& input_extent) {
-    // TODO
+void resettle_extent(extent& input_extent, StreamArchiver* write_stream) {
+    for(uint32_t i = 0; i < input_extent.length; ) {
+        extent fragment = allocate_extent(input_extent.length - i);
+        fragment.logical_start = input_extent.logical_start + i;
+        *reserve_extent(write_stream) = fragment;
+        memcpy(cluster_start(fragment.physical_start), cluster_start(input_extent.physical_start + i), fragment.length * meta_info.cluster_size);
+        i += fragment.length;
+    }
 }
 
 void fragment_extent(const extent& input_extent, StreamArchiver* write_stream) {
@@ -115,8 +121,9 @@ void fragment_extent(const extent& input_extent, StreamArchiver* write_stream) {
         printf("\tfragment: %d %d %d %d\n", fragment.physical_start, fragment.length, fragment.logical_start, is_blocked);
 
         if(is_blocked)
-            move_extent(fragment);
-        *reserve_extent(write_stream) = fragment;
+            resettle_extent(fragment, write_stream);
+        else
+            *reserve_extent(write_stream) = fragment;
     }
 }
 
