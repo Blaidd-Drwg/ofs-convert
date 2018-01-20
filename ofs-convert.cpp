@@ -154,6 +154,8 @@ void traverse(StreamArchiver* dir_extent_stream, StreamArchiver* write_stream) {
     fat_dentry* current_dentry = init_cluster_read_state(dir_extent_stream, &state);
 
     while (!is_dir_table_end(current_dentry)) {
+        fat_dentry* dentry = reserve_dentry(write_stream);
+
         bool has_long_name = is_lfn(current_dentry);
         if (has_long_name) {
             int lfn_entry_count = lfn_entry_sequence_no(current_dentry);
@@ -166,7 +168,7 @@ void traverse(StreamArchiver* dir_extent_stream, StreamArchiver* write_stream) {
             read_short_name(current_dentry, name[0]);
         }
 
-        fat_dentry* dentry = reserve_dentry(write_stream);
+        // current_dentry is the actual dentry now
         memcpy(dentry, current_dentry, sizeof *current_dentry);
 
         uint32_t cluster_no = file_cluster_no(current_dentry);
