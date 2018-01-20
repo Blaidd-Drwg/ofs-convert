@@ -77,21 +77,26 @@ uint32_t* reserve_children_count(StreamArchiver* write_stream) {
     return reinterpret_cast<uint32_t*>(ptr);
 }
 
-void read_extents(uint32_t cluster_no, StreamArchiver* write_stream) {
-    extent *current_extent = reserve_extent(write_stream);
-    *current_extent = {0, 1, cluster_no};
+void move_extent(extent new_extent, StreamArchiver* write_stream) {
+    // TODO
+    *reserve_extent(write_stream) = new_extent;
+}
 
-    uint32_t next_cluster_no = *fat_entry(cluster_no);
-
-    while (next_cluster_no < FAT_END_OF_CHAIN) {
-        if (next_cluster_no == current_extent->physical_start + current_extent->length) {
-            current_extent->length++;
-        } else {
-            extent new_extent = {current_extent->logical_start + current_extent->length, 1, next_cluster_no};
-            current_extent = reserve_extent(write_stream);
-            *current_extent = new_extent;
-        }
-        next_cluster_no = *fat_entry(next_cluster_no);
+void aggregate_extents(uint32_t cluster_no, StreamArchiver* write_stream) {
+    extent new_extent {0, 1, cluster_no};
+    while(true) {
+        bool is_end = cluster_no >= FAT_END_OF_CHAIN,
+             is_consecutive = cluster_no == new_extent.physical_start + new_extent.length;
+        if(is_end || !is_consecutive) {
+            move_extent(new_extent, write_stream);
+            new_extent.logical_start += new_extent.length;
+            new_extent.length = 1;
+            new_extent.physical_start = cluster_no;
+        } else
+            ++new_extent.length;
+        if(is_end)
+            break;
+        cluster_no = *fat_entry(cluster_no);
     }
 }
 
@@ -128,7 +133,7 @@ void traverse(StreamArchiver* dir_extent_stream, StreamArchiver* write_stream) {
 
         uint32_t cluster_no = file_cluster_no(current_dentry);
         StreamArchiver read_extent_stream = *write_stream;
-        read_extents(cluster_no, write_stream);
+        aggregate_extents(cluster_no, write_stream);
         if (is_dir(current_dentry)) {
             traverse(&read_extent_stream, write_stream);
         } else {
@@ -164,6 +169,6 @@ int main(int argc, const char** argv) {
     StreamArchiver stream;
     init_stream_archiver(&stream);
     StreamArchiver ext_stream = stream;
-    read_extents(boot_sector.root_cluster_no, &stream);
+    aggregate_extents(boot_sector.root_cluster_no, &stream);
     traverse(&ext_stream, &stream);
 }
