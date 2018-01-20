@@ -26,6 +26,10 @@ uint8_t *cluster_start(uint32_t cluster_no) {
     return meta_info.data_start + (cluster_no - FAT_START_INDEX) * meta_info.cluster_size;
 }
 
+bool is_free_cluster(uint32_t cluster_entry) {
+    return (cluster_entry & CLUSTER_ENTRY_MASK) == FREE_CLUSTER;
+}
+
 uint32_t file_cluster_no(struct fat_dentry *dentry) {
     uint16_t low = dentry->first_cluster_low;
     uint32_t high = dentry->first_cluster_high << 16;

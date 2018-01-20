@@ -21,6 +21,7 @@ uint8_t lfn_entry_sequence_no(struct fat_dentry *dentry);
 uint32_t file_cluster_no(struct fat_dentry *dentry);
 uint8_t *fat_entry(uint32_t cluster_no);
 uint8_t *cluster_start(uint32_t cluster_no);
+bool is_free_cluster(uint32_t cluster_entry);
 
 // Index in the FAT of the first data cluster
 constexpr uint32_t FAT_START_INDEX = 2;
@@ -70,7 +71,7 @@ struct extent {  // TODO: not here
 
 struct meta_info {
     uint8_t* fs_start;
-    uint8_t* fat_start;
+    uint32_t* fat_start;
     uint16_t fat_entries;
     uint32_t cluster_size;
     uint32_t dentries_per_cluster;
