@@ -5,6 +5,7 @@
 #include <sys/queue.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <time.h>
 
 #include "fat.h"
 #include "partition.h"
@@ -71,6 +72,22 @@ bool has_lower_extension(struct fat_dentry *dentry) {
 
 bool has_extension(struct fat_dentry *dentry) {
     return dentry->short_extension[0] != ' ';
+}
+
+uint32_t fat_time_to_unix(uint16_t date, uint16_t time) {
+    tm datetm;
+    memset(&datetm, 0, sizeof time);
+    datetm.tm_year = ((date & 0xFE00) >> 9) + 1980;
+    datetm.tm_mon= ((date & 0x1E0) >> 5);
+    datetm.tm_mday = date & 0x1F;
+    uint32_t unix_date = mktime(&datetm);
+
+    int hour = ((time & 0xF800) >> 11);
+    int minute = ((time & 0x7E0) >> 5);
+    int second = (time & 0x1F) * 2;
+    uint32_t unix_time = 3600 * hour + 60 * minute + second;
+
+    return unix_date + unix_time;
 }
 
 void lfn_cpy(uint16_t *dest, uint8_t *src) {

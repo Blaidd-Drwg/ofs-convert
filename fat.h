@@ -20,6 +20,7 @@ uint8_t lfn_entry_sequence_no(struct fat_dentry *dentry);
 uint32_t file_cluster_no(struct fat_dentry *dentry);
 uint32_t *fat_entry(uint32_t cluster_no);
 uint8_t *cluster_start(uint32_t cluster_no);
+uint32_t fat_time_to_unix(uint16_t date, uint16_t time);
 bool is_free_cluster(uint32_t cluster_entry);
 void lfn_cpy(uint16_t *dest, uint8_t *src);
 void read_short_name(struct fat_dentry *dentry, uint16_t *name);
