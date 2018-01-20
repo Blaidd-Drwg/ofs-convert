@@ -1,4 +1,4 @@
-#include "extent-allocate.h"
+#include "extent-allocator.h"
 
 #include <stdlib.h>
 
@@ -37,7 +37,8 @@ bool advance_index(extent_allocator& all) {
 
     if (is_current_index_blocked(all)) {
         do {
-            all.entry_index = max(all.entry_index, all.blocked_current->end_cluster);
+            all.entry_index = max(all.entry_index,
+                                  all.blocked_current->end_cluster);
             all.blocked_current++;
         } while (is_current_index_blocked(all));
 

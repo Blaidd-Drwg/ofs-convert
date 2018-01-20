@@ -18,8 +18,9 @@ struct extent_allocator {
 };
 
 extent_allocator make_extent_allocator(cluster_extent *blocked_extents,
-                                     cluster_extent *blocked_extents_end);
+                                       cluster_extent *blocked_extents_end);
 
-cluster_extent allocate_extent(extent_allocator& allocator, uint32_t max_length);
+cluster_extent allocate_extent(extent_allocator& allocator,
+                               uint32_t max_length);
 
 #endif //OFS_CONVERT_BLOCK_ALLOCATE_H
