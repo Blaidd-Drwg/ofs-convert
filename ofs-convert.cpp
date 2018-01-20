@@ -78,10 +78,11 @@ int *reserve_children_count(StreamArchiver *write_stream) {
     return (int *) p;
 }
 
-uint16_t *reserve_name(int count, StreamArchiver *write_stream) {
-    void *p = iterateStreamArchiver(write_stream, true, count * LFN_ENTRY_LENGTH * sizeof(uint16_t));
+void reserve_name(uint16_t *pointers[], int count, StreamArchiver *write_stream) {
+    for (int i = 0; i < count; i++) {
+        pointers[i] = (uint16_t *) iterateStreamArchiver(write_stream, true, LFN_ENTRY_LENGTH * sizeof(uint16_t));
+    }
     cutStreamArchiver(write_stream);
-    return (uint16_t *) p;
 }
 
 struct fat_dentry *reserve_dentry(StreamArchiver *write_stream) {
@@ -113,13 +114,13 @@ void read_short_name(struct fat_dentry *dentry, uint16_t *name) {
     *name = 0;
 }
 
-struct fat_dentry *read_lfn(struct fat_dentry *first_entry, StreamArchiver *extent_stream, uint16_t *name, int lfn_entry_count, struct read_state *state) {
+struct fat_dentry *read_lfn(struct fat_dentry *first_entry, StreamArchiver *extent_stream, uint16_t *name[], int lfn_entry_count, struct read_state *state) {
     char *entry = (char *) first_entry;
     for (int i = lfn_entry_count - 1; i >= 0; i--) {
         char *name_part = entry + i * LFN_ENTRY_LENGTH * sizeof(uint16_t);
-        memcpy(name, name_part + 1, 5 * sizeof(uint16_t));
-        memcpy(name + 5, name_part + 14, 6 * sizeof(uint16_t));
-        memcpy(name + 11, name_part + 28, 2 * sizeof(uint16_t));
+        memcpy(name[i], name_part + 1, 5 * sizeof(uint16_t));
+        memcpy(name[i] + 5, name_part + 14, 6 * sizeof(uint16_t));
+        memcpy(name[i] + 11, name_part + 28, 2 * sizeof(uint16_t));
 
         entry = (char *) next_dentry(extent_stream, state);
     }
@@ -137,27 +138,20 @@ void traverse(StreamArchiver *dir_extent_stream, StreamArchiver *write_stream) {
     }
 
     while (!is_dir_table_end(current_dentry)) {
-        uint16_t *name;
         bool has_long_name = is_lfn(current_dentry);
         if (has_long_name) {
             int lfn_entry_count = lfn_entry_sequence_no(current_dentry);
-            name = reserve_name(lfn_entry_count, write_stream);
+            uint16_t *name[lfn_entry_count];
+            reserve_name(name, lfn_entry_count, write_stream);
             current_dentry = read_lfn(current_dentry, dir_extent_stream, name, lfn_entry_count, &state);
         } else {
-            name = reserve_name(1, write_stream);
+            uint16_t *name[1];
+            reserve_name(name, 1, write_stream);
+            read_short_name(current_dentry, name[0]);
         }
 
         struct fat_dentry *dentry = reserve_dentry(write_stream);
         memcpy(dentry, current_dentry, sizeof *current_dentry);
-
-        if (!has_long_name) {
-            read_short_name(current_dentry, name);
-        }
-
-        for (int i = 0; i < 20 && name[i] != 0; i++) {
-            putc(name[i], stdout);
-        }
-        putc('\n', stdout);
 
         uint32_t cluster_no = file_cluster_no(current_dentry);
         StreamArchiver read_extent_stream = *write_stream;
