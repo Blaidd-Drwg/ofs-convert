@@ -11,7 +11,6 @@ bool is_lfn(struct fat_dentry *dentry);
 bool is_dir(struct fat_dentry *dentry);
 bool is_invalid(struct fat_dentry *dentry);
 bool is_dir_table_end(struct fat_dentry *dentry);
-bool is_dir_table_end(struct fat_dentry *dentry);
 bool is_last_lfn_entry(struct fat_dentry *dentry);
 bool is_dot_dir(struct fat_dentry *dentry);
 bool has_lower_name(struct fat_dentry *dentry);
@@ -19,9 +18,12 @@ bool has_lower_extension(struct fat_dentry *dentry);
 bool has_extension(struct fat_dentry *dentry);
 uint8_t lfn_entry_sequence_no(struct fat_dentry *dentry);
 uint32_t file_cluster_no(struct fat_dentry *dentry);
-uint8_t *fat_entry(uint32_t cluster_no);
+uint32_t *fat_entry(uint32_t cluster_no);
 uint8_t *cluster_start(uint32_t cluster_no);
 bool is_free_cluster(uint32_t cluster_entry);
+void lfn_cpy(uint16_t *dest, uint8_t *src);
+void read_short_name(struct fat_dentry *dentry, uint16_t *name);
+
 
 // Index in the FAT of the first data cluster
 constexpr uint32_t FAT_START_INDEX = 2;
