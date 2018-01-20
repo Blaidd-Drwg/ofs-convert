@@ -77,23 +77,61 @@ uint32_t* reserve_children_count(StreamArchiver* write_stream) {
     return reinterpret_cast<uint32_t*>(ptr);
 }
 
-void move_extent(extent new_extent, StreamArchiver* write_stream) {
+void move_extent(extent& input_extent) {
     // TODO
-    *reserve_extent(write_stream) = new_extent;
+}
+
+void fragment_extent(const extent& input_extent, StreamArchiver* write_stream) {
+    printf("input_extent: %d %d %d\n", input_extent.physical_start, input_extent.length, input_extent.logical_start);
+
+    uint32_t input_physical_end = input_extent.physical_start + input_extent.length,
+             fragment_physical_start = input_extent.physical_start,
+             i = find_blocked_extents(input_extent.physical_start);
+    while(true) {
+        if(i >= allocator.blocked_extent_count)
+            break;
+        extent* blocked_extent = &allocator.blocked_extents[i];
+        if(input_physical_end < blocked_extent->physical_start)
+            break;
+
+        uint32_t blocked_physical_end = blocked_extent->physical_start + blocked_extent->length,
+                 fragment_physical_end;
+        bool is_blocked = blocked_extent->physical_start <= fragment_physical_start;
+        if(is_blocked) {
+            if(input_physical_end < blocked_physical_end)
+                fragment_physical_end = input_physical_end;
+            else
+                fragment_physical_end = blocked_physical_end;
+            ++i;
+        } else
+            fragment_physical_end = blocked_extent->physical_start;
+
+        extent fragment;
+        fragment.physical_start = fragment_physical_start;
+        fragment.length = fragment.physical_start - fragment_physical_end;
+        fragment.logical_start = input_extent.logical_start + (input_extent.physical_start - fragment.physical_start);
+        fragment_physical_start = fragment_physical_end;
+
+        printf("\tfragment: %d %d %d %d\n", fragment.physical_start, fragment.length, fragment.logical_start, is_blocked);
+
+        if(is_blocked)
+            move_extent(fragment);
+        *reserve_extent(write_stream) = fragment;
+    }
 }
 
 void aggregate_extents(uint32_t cluster_no, StreamArchiver* write_stream) {
-    extent new_extent {0, 1, cluster_no};
+    extent current_extent {0, 1, cluster_no};
     while(true) {
         bool is_end = cluster_no >= FAT_END_OF_CHAIN,
-             is_consecutive = cluster_no == new_extent.physical_start + new_extent.length;
+             is_consecutive = cluster_no == current_extent.physical_start + current_extent.length;
         if(is_end || !is_consecutive) {
-            move_extent(new_extent, write_stream);
-            new_extent.logical_start += new_extent.length;
-            new_extent.length = 1;
-            new_extent.physical_start = cluster_no;
+            fragment_extent(current_extent, write_stream);
+            current_extent.logical_start += current_extent.length;
+            current_extent.length = 1;
+            current_extent.physical_start = cluster_no;
         } else
-            ++new_extent.length;
+            ++current_extent.length;
         if(is_end)
             break;
         cluster_no = *fat_entry(cluster_no);

@@ -32,11 +32,12 @@ extent allocate_extent(uint32_t& remaining_count) {
     return result;
 }
 
-uint32_t find_blocked_extents(uint32_t physical_start) {
+uint32_t find_blocked_extents(uint32_t physical_address) {
     uint32_t begin = 0, mid, end = allocator.blocked_extent_count;
     while(begin < end) {
         mid = (begin+end)/2;
-        if(allocator.blocked_extents[mid].physical_start < physical_start)
+        extent* blocked_extent = allocator.blocked_extents[mid];
+        if(blocked_extent.physical_start + blocked_extent.length < physical_address)
             begin = mid+1;
         else
             end = mid;
