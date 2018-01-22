@@ -69,6 +69,7 @@ ext4_super_block create_ext4_sb() {
             .s_magic = EXT4_MAGIC,
             .s_state = EXT4_STATE_CLEANLY_UNMOUNTED,
             .s_feature_incompat = EXT4_FEATURE_INCOMPAT_64BIT | EXT4_FEATURE_INCOMPAT_EXTENTS,
+            .s_feature_compat = EXT4_FEATURE_COMPAT_RESIZE_INODE,
             .s_desc_size = EXT4_64BIT_DESC_SIZE,
             .s_inode_size = EXT4_INODE_SIZE,
             .s_rev_level = EXT4_DYNAMIC_REV,

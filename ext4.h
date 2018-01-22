@@ -14,6 +14,8 @@ constexpr uint32_t EXT4_64BIT_DESC_SIZE = 64;
 
 constexpr uint32_t EXT4_FEATURE_INCOMPAT_EXTENTS = 0x0040;
 constexpr uint32_t EXT4_FEATURE_INCOMPAT_64BIT = 0x0080;
+// Actually means that there are reserved gdt blocks
+constexpr uint32_t EXT4_FEATURE_COMPAT_RESIZE_INODE = 0x0010;
 
 // Defaults copied from mkfs.ext4
 constexpr uint32_t EXT4_INODE_RATIO = 16384;
