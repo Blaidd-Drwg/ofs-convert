@@ -135,3 +135,10 @@ void set_meta_info(uint8_t *fs) {
     meta_info.dentries_per_cluster = meta_info.cluster_size / sizeof(struct fat_dentry);
     meta_info.data_start = (uint8_t*) meta_info.fat_start + boot_sector.fat_count * boot_sector.sectors_per_fat * boot_sector.bytes_per_sector;
 }
+
+uint32_t sector_count() {
+    return boot_sector.sector_count == 0
+           ? boot_sector.total_sectors2
+           : boot_sector.sector_count;
+
+}
