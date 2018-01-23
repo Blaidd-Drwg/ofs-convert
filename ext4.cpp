@@ -64,26 +64,27 @@ uint32_t block_group_count(const ext4_super_block& sb) {
 }
 
 
+
+
 ext4_super_block create_ext4_sb() {
-     ext4_super_block sb = {
-            .s_magic = EXT4_MAGIC,
-            .s_state = EXT4_STATE_CLEANLY_UNMOUNTED,
-            .s_feature_incompat = EXT4_FEATURE_INCOMPAT_64BIT | EXT4_FEATURE_INCOMPAT_EXTENTS,
-            .s_feature_compat = EXT4_FEATURE_COMPAT_RESIZE_INODE,
-            .s_desc_size = EXT4_64BIT_DESC_SIZE,
-            .s_inode_size = EXT4_INODE_SIZE,
-            .s_rev_level = EXT4_DYNAMIC_REV,
-    };
-
-    // TODO: Set all (relevant) values
-
     uint32_t bytes_per_block = boot_sector.bytes_per_sector * boot_sector.sectors_per_cluster;
     uint64_t partition_bytes = boot_sector.bytes_per_sector * static_cast<uint64_t>(sector_count());
 
     if (bytes_per_block < 1024) {
-        fprintf(stderr, "This tool only works for FAT partitions with cluster size >= 1024B\n");
+        fprintf(stderr, "This tool only works for FAT partitions with cluster size >= 1kB\n");
         exit(1);
     }
+
+    // TODO: Set all (relevant) values
+    ext4_super_block sb{};
+
+    sb.s_magic = EXT4_MAGIC;
+    sb.s_state = EXT4_STATE_CLEANLY_UNMOUNTED;
+    sb.s_feature_incompat = EXT4_FEATURE_INCOMPAT_64BIT | EXT4_FEATURE_INCOMPAT_EXTENTS;
+    sb.s_feature_compat = EXT4_FEATURE_COMPAT_RESIZE_INODE;
+    sb.s_desc_size = EXT4_64BIT_DESC_SIZE;
+    sb.s_inode_size = EXT4_INODE_SIZE;
+    sb.s_rev_level = EXT4_DYNAMIC_REV;
 
     sb.s_log_block_size = log2(bytes_per_block) - EXT4_BLOCK_SIZE_MIN_LOG2;
     sb.s_first_data_block = bytes_per_block == 1024 ? 1 : 0;
@@ -118,10 +119,6 @@ void block_group_meta_extents(const ext4_super_block& sb, extent *list_out) {
     uint32_t bg_size = sb.s_blocks_per_group;
     uint32_t bg_overhead = block_group_overhead(sb);
     for (uint32_t i = 0; i < block_group_count(sb); ++i) {
-        *list_out++ = {
-                .physical_start = bg_size * i + sb.s_first_data_block,
-                .logical_start = 0,
-                .length = bg_overhead,
-        };
+        *list_out++ = { 0, bg_overhead, block_group_start(sb, i) };
     }
 }
