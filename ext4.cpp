@@ -36,6 +36,11 @@ uint32_t block_size(const ext4_super_block& sb) {
 }
 
 
+uint8_t *block_start(uint32_t block_no, ext4_super_block& sb) {
+    return meta_info.data_start + block_no * block_size(sb);
+}
+
+
 uint16_t calc_reserved_gdt_blocks(const ext4_super_block& sb) {
     // This logic is copied from the one in the official mke2fs (http://e2fsprogs.sourceforge.net/)
     uint64_t block_count = from_lo_hi(sb.s_blocks_count_lo, sb.s_blocks_count_hi);
@@ -62,9 +67,6 @@ uint32_t block_group_count(const ext4_super_block& sb) {
     uint64_t block_count = from_lo_hi(sb.s_blocks_count_lo, sb.s_blocks_count_hi);
     return static_cast<uint32_t>(ceildiv<uint64_t>(block_count, sb.s_blocks_per_group));
 }
-
-
-
 
 ext4_super_block create_ext4_sb() {
     uint32_t bytes_per_block = boot_sector.bytes_per_sector * boot_sector.sectors_per_cluster;

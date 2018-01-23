@@ -145,4 +145,7 @@ uint32_t block_group_count(const ext4_super_block& sb);
 
 void block_group_meta_extents(const ext4_super_block& fs, extent *list_out);
 
+uint64_t block_size(ext4_super_block& sb);
+
+uint8_t *block_start(uint32_t block_no, ext4_super_block& sb);
 #endif //OFS_CONVERT_EXT4_H
