@@ -1,40 +1,9 @@
 #include "ext4.h"
+#include "ext4_bg.h"
+#include "util.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-
-
-uint32_t log2(uint32_t value) {
-    return sizeof(value) * 8 - __builtin_clz(value);
-}
-
-
-uint32_t min(uint32_t a, uint32_t b) {
-    return a < b ? a : b;
-}
-
-
-uint64_t from_lo_hi(uint32_t lo, uint32_t hi) {
-    return static_cast<uint64_t>(hi) << 32 | lo;
-}
-
-
-void set_lo_hi(uint32_t& lo, uint32_t& hi, uint64_t value) {
-    lo = static_cast<uint32_t>(value & 0xFFFFFFFF);
-    hi = static_cast<uint32_t>(value >> 32);
-}
-
-
-void set_lo_hi(uint16_t& lo, uint16_t& hi, uint32_t value) {
-    lo = static_cast<uint16_t>(value & 0xFFFF);
-    hi = static_cast<uint16_t>(value >> 16);
-}
-
-
-template <class T>
-uint32_t ceildiv(T a, T b) {
-    return (a + b - 1) / b;
-}
 
 
 uint32_t block_size(const ext4_super_block& sb) {
@@ -42,31 +11,8 @@ uint32_t block_size(const ext4_super_block& sb) {
 }
 
 
-uint8_t *block_start(uint32_t block_no, ext4_super_block& sb) {
+uint8_t *block_start(uint32_t block_no, const ext4_super_block& sb) {
     return meta_info.data_start + block_no * block_size(sb);
-}
-
-
-uint32_t block_group_count(const ext4_super_block& sb) {
-    uint64_t block_count = from_lo_hi(sb.s_blocks_count_lo, sb.s_blocks_count_hi);
-    return static_cast<uint32_t>(ceildiv<uint64_t>(block_count, sb.s_blocks_per_group));
-}
-
-
-uint32_t block_group_blocks(const ext4_super_block& sb) {
-    return ceildiv(block_group_count(sb), block_size(sb) / sb.s_desc_size);
-}
-
-
-uint32_t block_group_overhead(const ext4_super_block& sb) {
-    uint32_t inode_table_blocks = ceildiv(sb.s_inodes_per_group,
-                                          block_size(sb) / sb.s_inode_size);
-    return 3 + block_group_blocks(sb) + sb.s_reserved_gdt_blocks + inode_table_blocks;
-}
-
-
-uint32_t block_group_start(const ext4_super_block& sb, uint32_t num) {
-    return sb.s_blocks_per_group * num + sb.s_first_data_block;
 }
 
 
@@ -131,29 +77,4 @@ ext4_super_block create_ext4_sb() {
     sb.s_inodes_count = sb.s_inodes_per_group * block_group_count(sb);
 
     return sb;
-}
-
-
-ext4_group_desc create_basic_group_desc(const ext4_super_block& sb) {
-    ext4_group_desc bg{};
-    uint32_t gdt_blocks = block_group_blocks(sb);
-    set_lo_hi(bg.bg_block_bitmap_lo, bg.bg_block_bitmap_hi,
-              1 + gdt_blocks + sb.s_reserved_gdt_blocks);
-    set_lo_hi(bg.bg_inode_bitmap_lo, bg.bg_inode_bitmap_hi,
-              2 + gdt_blocks + sb.s_reserved_gdt_blocks);
-    set_lo_hi(bg.bg_inode_table_lo, bg.bg_inode_table_hi,
-              3 + gdt_blocks + sb.s_reserved_gdt_blocks);
-    set_lo_hi(bg.bg_free_inodes_count_lo, bg.bg_free_inodes_count_hi,
-              sb.s_inodes_per_group);
-
-    // Checksums are calculated after inode and directory counts are finalized
-    return bg;
-}
-
-
-void block_group_meta_extents(const ext4_super_block& sb, extent *list_out) {
-    uint32_t bg_overhead = block_group_overhead(sb);
-    for (uint32_t i = 0; i < block_group_count(sb); ++i) {
-        *list_out++ = { 0, bg_overhead, block_group_start(sb, i) };
-    }
 }
