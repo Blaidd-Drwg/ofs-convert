@@ -13,6 +13,9 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+constexpr uint16_t S_IFDIR = 0x4000;
+constexpr uint16_t S_IFREG = 0x8000;
+
 uint32_t first_free_inode_no = 0;
 
 uint32_t save_inode(ext4_inode *inode) {
@@ -23,7 +26,7 @@ uint32_t save_inode(ext4_inode *inode) {
 uint32_t build_inode(fat_dentry *dentry) {
     ext4_inode inode;
     memset(&inode, 0, sizeof inode);
-    inode.i_mode = 0733 | (is_dir(dentry) ? 0400000 : 0100000);
+    inode.i_mode = 0733us | (is_dir(dentry) ? S_IFREG : S_IFDIR);
     inode.i_uid = geteuid() & 0xFFFF;
     inode.l_i_uid_high = geteuid() >> 16;
     inode.i_gid = getegid() & 0xFFFF;
