@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 #include "ext4.h"
+#include "ext4_inode.h"
+
+constexpr uint32_t EXT4_BG_INODE_UNINIT = 0x0001;
+constexpr uint32_t EXT4_BG_BLOCK_UNINIT = 0x0002;
 
 struct ext4_group_desc {
     uint32_t bg_block_bitmap_lo; /* Blocks bitmap block */
@@ -39,5 +43,16 @@ uint32_t block_group_blocks(const ext4_super_block& sb);
 uint32_t block_group_overhead(const ext4_super_block& sb);
 
 void block_group_meta_extents(const ext4_super_block& sb, extent *list_out);
+
+ext4_group_desc *create_groups(const ext4_super_block& sb);
+
+void add_inode(const ext4_super_block& sb, const ext4_inode& inode,
+               uint32_t inode_num, ext4_group_desc* groups);
+
+void mark_extent_as_used(const ext4_super_block& sb, uint64_t blocks_begin,
+                         uint64_t blocks_end, ext4_group_desc *groups);
+
+ext4_inode& get_existing_inode(const ext4_super_block& sb,
+                               ext4_group_desc* groups, uint32_t inode_num);
 
 #endif //OFS_CONVERT_EXT4_BG_H

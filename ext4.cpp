@@ -11,7 +11,7 @@ uint32_t block_size(const ext4_super_block& sb) {
 }
 
 
-uint8_t *block_start(uint32_t block_no, const ext4_super_block& sb) {
+uint8_t *block_start(uint64_t block_no, const ext4_super_block& sb) {
     return meta_info.data_start + block_no * block_size(sb);
 }
 

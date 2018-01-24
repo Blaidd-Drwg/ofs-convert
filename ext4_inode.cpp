@@ -5,6 +5,7 @@
 #include "extent-allocator.h"
 #include "stream-archiver.h"
 #include "ext4_inode.h"
+#include "util.h"
 
 #include <string.h>
 #include <stdint.h>
@@ -35,8 +36,7 @@ uint32_t build_inode(fat_dentry *dentry) {
 
 void set_size(int inode_no, uint64_t size) {
     ext4_inode *inode = get_inode(inode_no);
-    inode->i_size_lo = size & 0xFFFFFFFF;
-    inode->i_size_high = size >> 32;
+    set_lo_hi(inode->i_size_lo, inode->i_size_high, size);
 }
 
 int save_inode(ext4_inode *inode) {

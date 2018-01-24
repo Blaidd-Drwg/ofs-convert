@@ -13,9 +13,15 @@ void set_lo_hi(uint32_t& lo, uint32_t& hi, uint64_t value);
 
 void set_lo_hi(uint16_t& lo, uint16_t& hi, uint32_t value);
 
+void incr_lo_hi(uint16_t& lo, uint16_t& hi, uint32_t diff = 1);
+
+void decr_lo_hi(uint16_t& lo, uint16_t& hi, uint32_t diff = 1);
+
 template <class T>
 uint32_t ceildiv(T a, T b) {
     return (a + b - 1) / b;
 }
+
+void bitmap_set_bit(uint8_t* bitmap, uint32_t bit_num);
 
 #endif //OFS_CONVERT_UTIL_H

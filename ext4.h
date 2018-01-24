@@ -143,5 +143,5 @@ ext4_super_block create_ext4_sb();
 
 uint32_t block_size(const ext4_super_block& sb);
 
-uint8_t *block_start(uint32_t block_no, const ext4_super_block& sb);
+uint8_t *block_start(uint64_t block_no, const ext4_super_block& sb);
 #endif //OFS_CONVERT_EXT4_H
