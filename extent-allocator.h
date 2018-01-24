@@ -12,7 +12,7 @@ struct extent_allocator {
 };
 extern extent_allocator allocator;
 
-void init_extent_allocator();
+void init_extent_allocator(extent *blocked_extents);
 extent allocate_extent(uint32_t max_length);
 uint32_t find_first_blocked_extent(uint32_t physical_address);
 extent* find_next_blocked_extent(uint32_t& i, uint32_t physical_end);

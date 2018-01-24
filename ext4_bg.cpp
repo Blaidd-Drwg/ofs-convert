@@ -34,15 +34,19 @@ uint32_t block_group_start(uint32_t num) {
 }
 
 
-void block_group_meta_extents(extent *list_out) {
+extent *create_block_group_meta_extents() {
+    uint32_t bg_count = block_group_count();
+    auto * extents = static_cast<extent *>(malloc(bg_count * sizeof(extent)));
     uint32_t bg_overhead = block_group_overhead();
     for (uint32_t i = 0; i < block_group_count(); ++i) {
-        *list_out++ = {0, bg_overhead, block_group_start(i)};
+        extents[i] = {0, bg_overhead, block_group_start(i)};
     }
+
+    return extents;
 }
 
 
-void init_group_descs() {
+void init_ext4_group_descs() {
     uint32_t bg_count = block_group_count();
     uint32_t gdt_blocks = block_group_blocks();
 

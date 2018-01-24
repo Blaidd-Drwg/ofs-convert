@@ -1,3 +1,5 @@
+#include "ext4.h"
+#include "ext4_bg.h"
 #include "extent-allocator.h"
 #include "metadata_reader.h"
 #include "partition.h"
@@ -19,7 +21,10 @@ int main(int argc, const char** argv) {
 
     read_boot_sector(partition.ptr);
     set_meta_info(partition.ptr);
-    init_extent_allocator();
+
+    init_ext4_sb();
+    init_ext4_group_descs();
+    init_extent_allocator(create_block_group_meta_extents());
 
     StreamArchiver stream;
     init_stream_archiver(&stream);

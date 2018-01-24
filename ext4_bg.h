@@ -44,9 +44,9 @@ uint32_t block_group_blocks();
 
 uint32_t block_group_overhead();
 
-void block_group_meta_extents(extent *list_out);
+extent *create_block_group_meta_extents();
 
-void init_group_descs();
+void init_ext4_group_descs();
 
 void add_inode(const ext4_inode& inode, uint32_t inode_num);
 
