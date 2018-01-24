@@ -13,9 +13,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-constexpr uint16_t S_IFDIR = 0x4000;
-constexpr uint16_t S_IFREG = 0x8000;
-
 uint32_t first_free_inode_no = 0;
 
 uint32_t save_inode(ext4_inode *inode) {

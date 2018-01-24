@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ext4_bg.h"
+#include "ext4_inode.h"
 #include "util.h"
 
 
@@ -85,8 +86,7 @@ void add_inode(const ext4_inode& inode, uint32_t inode_num) {
     reinterpret_cast<ext4_inode*>(inode_table)[num_in_bg] = inode;
 
     decr_lo_hi(bg.bg_free_inodes_count_lo, bg.bg_free_inodes_count_hi);
-//    if (IS_INODE_DIRECTORY(inode)) {
-    if (true) {
+    if (inode.i_mode & S_IFDIR) {
         incr_lo_hi(bg.bg_used_dirs_count_lo, bg.bg_used_dirs_count_hi);
     }
 }
