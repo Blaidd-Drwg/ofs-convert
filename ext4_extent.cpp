@@ -116,6 +116,7 @@ void add_extent(extent *ext, uint32_t inode_number) {
         append_to_extent_tree(ext, header);
     }
 
+    add_extent_to_block_bitmap(ext->physical_start, ext->physical_start + ext->length);
     inode->i_blocks_lo += ext->length;
 }
 

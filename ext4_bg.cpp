@@ -92,7 +92,7 @@ void add_inode(const ext4_inode& inode, uint32_t inode_num) {
 }
 
 
-void mark_extent_as_used(uint64_t blocks_begin, uint64_t blocks_end) {
+void add_extent_to_block_bitmap(uint64_t blocks_begin, uint64_t blocks_end) {
     // We assume the extent is correct, i.e. only inside a single block group
     auto bg_num = static_cast<uint32_t>((blocks_begin - sb.s_first_data_block) / sb.s_blocks_per_group);
     ext4_group_desc& bg = group_descs[bg_num];

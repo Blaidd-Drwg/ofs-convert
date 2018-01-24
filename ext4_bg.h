@@ -50,7 +50,7 @@ void init_group_descs();
 
 void add_inode(const ext4_inode& inode, uint32_t inode_num);
 
-void mark_extent_as_used(uint64_t blocks_begin, uint64_t blocks_end);
+void add_extent_to_block_bitmap(uint64_t blocks_begin, uint64_t blocks_end);
 
 ext4_inode& get_existing_inode(uint32_t inode_num);
 
