@@ -44,9 +44,15 @@ int save_inode(ext4_inode *inode) {
     return first_free_inode_no++;
 }
 
-struct ext4_inode *get_inode(uint32_t inode_no, ext4_super_block *sb) {
-    int bg_no = inode_no / sb->s_inodes_per_group;
-    ext4_inode *inode_table_start = NULL;  // TODO
-    return inode_table_start + (inode_no % sb->s_inodes_per_group);
+ext4_inode *inode_table_start(int bg_no, ext4_super_block *sb) {
+    ext4_group_desc *bgt = (ext4_group_desc*) (sb + 1);
+    ext4_group_desc *desc = bgt + bg_no;
+    uint32_t block_no = desc->bg_inode_table_lo;
+    return (ext4_inode *) block_start(block_no, *sb);
 }
 
+ext4_inode *get_inode(uint32_t inode_no, ext4_super_block *sb) {
+    uint16_t bg_no = inode_no / sb->s_inodes_per_group;
+    ext4_inode *table_start = inode_table_start(bg_no, sb);
+    return table_start + (inode_no % sb->s_inodes_per_group);
+}

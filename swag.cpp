@@ -12,18 +12,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-// TODO:
-// ez:
-// remove unnecessary includes
-//
-// mid:
-// get inode table start
-//
-// hard:
-// checksum
-// handle hardlinks
-// merge dir extents
-
 void build_ext4_metadata_tree(uint32_t parent_inode_number, StreamArchiver *read_stream, ext4_super_block *sb) {
     uint32_t child_count = *(uint32_t*) iterateStreamArchiver(read_stream, false,
                                                               sizeof child_count);
