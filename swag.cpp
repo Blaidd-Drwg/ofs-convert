@@ -12,7 +12,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-void build_ext4_metadata_tree(uint32_t parent_inode_number, StreamArchiver *read_stream, ext4_super_block *sb) {
+void build_ext4_metadata_tree(uint32_t parent_inode_number, StreamArchiver *read_stream) {
     uint32_t child_count = *(uint32_t*) iterateStreamArchiver(read_stream, false,
                                                               sizeof child_count);
     extent dentry_extent = allocate_extent(1);
@@ -27,26 +27,26 @@ void build_ext4_metadata_tree(uint32_t parent_inode_number, StreamArchiver *read
                                                                     sizeof *f_dentry);
         uint32_t inode_number = build_inode(f_dentry);
         ext4_dentry *e_dentry = build_dentry(inode_number, read_stream);
-        if (e_dentry->rec_len > block_size(*sb) - position_in_block) {
-            previous_dentry->rec_len += block_size(*sb) - position_in_block;
+        if (e_dentry->rec_len > block_size() - position_in_block) {
+            previous_dentry->rec_len += block_size() - position_in_block;
 
-            add_extent(&dentry_extent, parent_inode_number, sb);
+            add_extent(&dentry_extent, parent_inode_number);
 
             dentry_extent = allocate_extent(1);
             dentry_extent.logical_start = block_count++;
         }
-        ext4_dentry *dentry_address = (ext4_dentry *) block_start(dentry_extent.physical_start, *sb) + position_in_block;
+        ext4_dentry *dentry_address = (ext4_dentry *) block_start(dentry_extent.physical_start) + position_in_block;
         memcpy(dentry_address, e_dentry, e_dentry->rec_len);
         position_in_block += e_dentry->rec_len;
         previous_dentry = dentry_address;
         free(e_dentry);
 
         if (!is_dir(f_dentry)) {
-            set_extents(inode_number, f_dentry, read_stream, sb);
+            set_extents(inode_number, f_dentry, read_stream);
         } else {
             while (iterateStreamArchiver(read_stream, false, sizeof(extent))) ;  // consume extents
-            build_ext4_metadata_tree(inode_number, read_stream, sb);
+            build_ext4_metadata_tree(inode_number, read_stream);
         }
      }
-    set_size(parent_inode_number, block_count * block_size(*sb));
+    set_size(parent_inode_number, block_count * block_size());
 }

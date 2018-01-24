@@ -32,12 +32,12 @@ void set_lo_hi(uint16_t& lo, uint16_t& hi, uint32_t value) {
 }
 
 
-void incr_lo_hi(uint16_t& lo, uint16_t& hi, uint32_t diff = 1) {
+void incr_lo_hi(uint16_t& lo, uint16_t& hi, uint32_t diff) {
     set_lo_hi(lo, hi, from_lo_hi(lo, hi) + diff);
 }
 
 
-void decr_lo_hi(uint16_t& lo, uint16_t& hi, uint32_t diff = 1) {
+void decr_lo_hi(uint16_t& lo, uint16_t& hi, uint32_t diff) {
     set_lo_hi(lo, hi, from_lo_hi(lo, hi) - diff);
 }
 

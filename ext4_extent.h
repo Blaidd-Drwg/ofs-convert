@@ -38,7 +38,7 @@ struct ext4_extent_tail {
 };
 
 ext4_extent_header init_extent_header();
-void add_extent(extent *ext, uint32_t inode_number, ext4_super_block *sb);
-void set_extents(uint32_t inode_number, fat_dentry *dentry, StreamArchiver *read_stream, ext4_super_block *sb);
+void add_extent(extent *ext, uint32_t inode_number);
+void set_extents(uint32_t inode_number, fat_dentry *dentry, StreamArchiver *read_stream);
 
 #endif //OFS_EXT4_EXTENT_H

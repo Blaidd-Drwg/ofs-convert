@@ -13,7 +13,12 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-int first_free_inode_no = 0;
+uint32_t first_free_inode_no = 0;
+
+uint32_t save_inode(ext4_inode *inode) {
+    add_inode(*inode, first_free_inode_no);
+    return first_free_inode_no++;
+}
 
 uint32_t build_inode(fat_dentry *dentry) {
     ext4_inode inode;
@@ -34,26 +39,7 @@ uint32_t build_inode(fat_dentry *dentry) {
     return save_inode(&inode);
 }
 
-void set_size(int inode_no, uint64_t size) {
-    ext4_inode *inode = get_inode(inode_no);
-    set_lo_hi(inode->i_size_lo, inode->i_size_high, size);
-}
-
-int save_inode(ext4_inode *inode) {
-    ext4_inode *free_inode = get_inode(first_free_inode_no);
-    memcpy(free_inode, inode, sizeof *inode);
-    return first_free_inode_no++;
-}
-
-ext4_inode *inode_table_start(int bg_no, ext4_super_block *sb) {
-    ext4_group_desc *bgt = (ext4_group_desc*) (sb + 1);
-    ext4_group_desc *desc = bgt + bg_no;
-    uint32_t block_no = desc->bg_inode_table_lo;
-    return (ext4_inode *) block_start(block_no, *sb);
-}
-
-ext4_inode *get_inode(uint32_t inode_no, ext4_super_block *sb) {
-    uint16_t bg_no = inode_no / sb->s_inodes_per_group;
-    ext4_inode *table_start = inode_table_start(bg_no, sb);
-    return table_start + (inode_no % sb->s_inodes_per_group);
+void set_size(uint32_t inode_no, uint64_t size) {
+    ext4_inode& inode = get_existing_inode(inode_no);
+    set_lo_hi(inode.i_size_lo, inode.i_size_high, size);
 }

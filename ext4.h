@@ -21,6 +21,8 @@ constexpr uint32_t EXT4_FEATURE_COMPAT_RESIZE_INODE = 0x0010;
 constexpr uint32_t EXT4_INODE_RATIO = 16384;
 constexpr uint32_t EXT4_INODE_SIZE = 256;
 
+extern struct ext4_super_block sb;
+
 struct ext4_super_block {
     uint32_t s_inodes_count;        /* Inodes count */
     uint32_t s_blocks_count_lo;    /* Blocks count */
@@ -139,9 +141,9 @@ struct ext4_super_block {
     uint32_t s_checksum;        /* crc32c(superblock) */
 };
 
-ext4_super_block create_ext4_sb();
+void init_ext4_sb();
 
-uint32_t block_size(const ext4_super_block& sb);
+uint32_t block_size();
 
-uint8_t *block_start(uint64_t block_no, const ext4_super_block& sb);
+uint8_t *block_start(uint64_t block_no);
 #endif //OFS_CONVERT_EXT4_H

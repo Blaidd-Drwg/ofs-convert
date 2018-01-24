@@ -40,8 +40,6 @@ struct ext4_inode {
 };
 
 uint32_t build_inode(fat_dentry *dentry);
-struct ext4_inode *get_inode(uint32_t inode_number);
-int save_inode(ext4_inode *inode);
-void set_size(int inode_number, uint64_t size);
+void set_size(uint32_t inode_number, uint64_t size);
 
 #endif //OFS_EXT4_INODE_H
