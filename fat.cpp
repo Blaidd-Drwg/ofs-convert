@@ -10,15 +10,12 @@
 #include "fat.h"
 #include "partition.h"
 
-TAILQ_HEAD(extent_list, extent_lentry);
-
 struct boot_sector boot_sector;
 struct meta_info meta_info;
 
-struct extent_lentry {
-    TAILQ_ENTRY(extent_lentry) entries;
-    struct extent extent;
-};
+uint64_t fat_sector_to_ext4_block(uint32_t sector_no) {
+    return sector_no + meta_info.sectors_before_data;
+}
 
 uint32_t *fat_entry(uint32_t cluster_no) {
     return meta_info.fat_start + cluster_no;
@@ -133,7 +130,8 @@ void set_meta_info(uint8_t *fs) {
     meta_info.fat_entries = boot_sector.sectors_per_fat / boot_sector.sectors_per_cluster;
     meta_info.cluster_size = boot_sector.sectors_per_cluster * boot_sector.bytes_per_sector;
     meta_info.dentries_per_cluster = meta_info.cluster_size / sizeof(struct fat_dentry);
-    meta_info.data_start = (uint8_t*) meta_info.fat_start + boot_sector.fat_count * boot_sector.sectors_per_fat * boot_sector.bytes_per_sector;
+    meta_info.sectors_before_data = boot_sector.sectors_before_fat + boot_sector.sectors_per_fat * boot_sector.fat_count;
+    meta_info.data_start = fs + meta_info.sectors_before_data * boot_sector.bytes_per_sector;
 }
 
 uint32_t sector_count() {

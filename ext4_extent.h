@@ -5,7 +5,7 @@
 constexpr int EXT4_NAME_LEN = 255;
 constexpr uint16_t EH_MAGIC = 0xF30A;
 
-struct extent;
+struct fat_extent;
 struct fat_dentry;
 struct StreamArchiver;
 struct ext4_super_block;
@@ -38,7 +38,7 @@ struct ext4_extent_tail {
 };
 
 ext4_extent_header init_extent_header();
-void add_extent(extent *ext, uint32_t inode_number);
+void add_extent(fat_extent *ext, uint32_t inode_number);
 void set_extents(uint32_t inode_number, fat_dentry *dentry, StreamArchiver *read_stream);
 
 #endif //OFS_EXT4_EXTENT_H

@@ -34,9 +34,9 @@ uint32_t block_group_start(uint32_t num) {
 }
 
 
-extent *create_block_group_meta_extents() {
+fat_extent *create_block_group_meta_extents() {
     uint32_t bg_count = block_group_count();
-    auto * extents = static_cast<extent *>(malloc(bg_count * sizeof(extent)));
+    auto * extents = static_cast<fat_extent *>(malloc(bg_count * sizeof(fat_extent)));
     uint32_t bg_overhead = block_group_overhead();
     for (uint32_t i = 0; i < block_group_count(); ++i) {
         extents[i] = {0, bg_overhead, block_group_start(i)};

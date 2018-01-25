@@ -15,7 +15,7 @@
 void build_ext4_metadata_tree(uint32_t parent_inode_number, StreamArchiver *read_stream) {
     uint32_t child_count = *(uint32_t*) iterateStreamArchiver(read_stream, false,
                                                               sizeof child_count);
-    extent dentry_extent = allocate_extent(1);
+    fat_extent dentry_extent = allocate_extent(1);
     dentry_extent.logical_start = 0;
 
     int position_in_block = 0;
@@ -35,7 +35,7 @@ void build_ext4_metadata_tree(uint32_t parent_inode_number, StreamArchiver *read
             dentry_extent = allocate_extent(1);
             dentry_extent.logical_start = block_count++;
         }
-        ext4_dentry *dentry_address = (ext4_dentry *) block_start(dentry_extent.physical_start) + position_in_block;
+        ext4_dentry *dentry_address = (ext4_dentry *) block_start(fat_sector_to_ext4_block(dentry_extent.physical_start)) + position_in_block;
         memcpy(dentry_address, e_dentry, e_dentry->rec_len);
         position_in_block += e_dentry->rec_len;
         previous_dentry = dentry_address;
@@ -44,7 +44,7 @@ void build_ext4_metadata_tree(uint32_t parent_inode_number, StreamArchiver *read
         if (!is_dir(f_dentry)) {
             set_extents(inode_number, f_dentry, read_stream);
         } else {
-            while (iterateStreamArchiver(read_stream, false, sizeof(extent))) ;  // consume extents
+            while (iterateStreamArchiver(read_stream, false, sizeof(fat_extent))) ;  // consume extents
             build_ext4_metadata_tree(inode_number, read_stream);
         }
      }

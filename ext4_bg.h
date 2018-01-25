@@ -44,7 +44,7 @@ uint32_t block_group_blocks();
 
 uint32_t block_group_overhead();
 
-extent *create_block_group_meta_extents();
+fat_extent *create_block_group_meta_extents();
 
 void init_ext4_group_descs();
 

@@ -20,6 +20,12 @@ uint32_t from_lo_hi(uint16_t lo, uint16_t hi) {
 }
 
 
+void set_lo_hi(uint32_t& lo, uint16_t& hi, uint64_t value) {
+    lo = static_cast<uint32_t>(value & 0xFFFFFFFF);
+    hi = static_cast<uint16_t>(value >> 32);
+}
+
+
 void set_lo_hi(uint32_t& lo, uint32_t& hi, uint64_t value) {
     lo = static_cast<uint32_t>(value & 0xFFFFFFFF);
     hi = static_cast<uint32_t>(value >> 32);

@@ -15,7 +15,7 @@ uint32_t block_size() {
 
 
 uint8_t *block_start(uint64_t block_no) {
-    return meta_info.data_start + block_no * block_size();
+    return meta_info.fs_start + block_no * block_size();
 }
 
 

@@ -26,9 +26,13 @@ int main(int argc, const char** argv) {
     init_ext4_group_descs();
     init_extent_allocator(create_block_group_meta_extents());
 
-    StreamArchiver stream;
-    init_stream_archiver(&stream);
-    StreamArchiver ext_stream = stream;
-    aggregate_extents(boot_sector.root_cluster_no, &stream);
-    traverse(&ext_stream, &stream);
+    StreamArchiver write_stream;
+    init_stream_archiver(&write_stream);
+    StreamArchiver extent_stream = write_stream;
+    StreamArchiver read_stream = write_stream;
+
+    aggregate_extents(boot_sector.root_cluster_no, &write_stream);
+    traverse(&extent_stream, &write_stream);
+
+    //build_ext4_metadata_tree(EXT4_ROOT_INODE, &read_stream);
 }

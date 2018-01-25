@@ -7,6 +7,7 @@ void set_meta_info(uint8_t *fs);
 void read_boot_sector(uint8_t *fs);
 void recursive_traverse(uint32_t cluster_no, uint16_t *long_name);
 
+uint64_t fat_sector_to_ext4_block(uint32_t sector_no);
 bool is_lfn(struct fat_dentry *dentry);
 bool is_dir(struct fat_dentry *dentry);
 bool is_invalid(struct fat_dentry *dentry);
@@ -67,7 +68,8 @@ struct __attribute__((packed)) boot_sector {
     uint64_t fs_type;
 };
 
-struct extent {  // TODO: not here
+// This struct is not defined by FAT
+struct fat_extent {
     uint32_t logical_start;  // First file cluster number that this extent covers
     uint32_t length;  // Number of clusters covered by extent
     uint32_t physical_start;  // Physical cluster number to which this extent points
@@ -79,6 +81,7 @@ struct meta_info {
     uint16_t fat_entries;
     uint32_t cluster_size;
     uint32_t dentries_per_cluster;
+    uint32_t sectors_before_data;
     uint8_t* data_start;
 };
 

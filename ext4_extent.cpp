@@ -18,21 +18,19 @@ ext4_extent_header init_extent_header() {
     return header;
 }
 
-ext4_extent to_ext4_extent(extent *e) {
-    return {
-        // what if fat extent longer than uint16?
-        .ee_block = e->logical_start,
-        .ee_len = e->length,
-        .ee_start_hi = 0,
-        .ee_start_lo = e->physical_start
-    };
+ext4_extent to_ext4_extent(fat_extent *fext) {
+    ext4_extent eext;
+    eext.ee_block = fext->logical_start;
+    eext.ee_len = fext->length;
+    set_lo_hi(eext.ee_start_lo, eext.ee_start_hi, fat_sector_to_ext4_block(fext->physical_start));
+    return eext;
 }
 
-void append_to_new_idx_path(uint16_t depth, extent *ext, ext4_extent_idx *idx) {
+void append_to_new_idx_path(uint16_t depth, ext4_extent *ext, ext4_extent_idx *idx) {
     for (int i = depth; i > depth; i--) {
-        uint32_t block_no = allocate_extent(1).physical_start;
+        uint32_t block_no = fat_sector_to_ext4_block(allocate_extent(1).physical_start);
         *idx = {
-            .ei_block = ext->logical_start,
+            .ei_block = ext->ee_block,
             .ei_leaf_lo = block_no,
             .ei_leaf_hi = 0
         };
@@ -45,23 +43,23 @@ void append_to_new_idx_path(uint16_t depth, extent *ext, ext4_extent_idx *idx) {
         idx = (ext4_extent_idx *) (header + 1);
     }
     ext4_extent *actual_extent = (ext4_extent *) idx;
-    *actual_extent = to_ext4_extent(ext);
+    memcpy(actual_extent, ext, sizeof *ext);
 }
 
-bool append_in_block(ext4_extent_header *header, extent *ext) {
+bool append_in_block(ext4_extent_header *header, ext4_extent *ext) {
     if (header->eh_entries >= header->eh_max) return false;
 
     ext4_extent *new_entry = (ext4_extent *) (header + header->eh_entries + 1);
     // move tail
-    memcpy(new_entry, new_entry + 1, sizeof(ext4_extent_tail));
+    memcpy(new_entry + 1, new_entry, sizeof(ext4_extent_tail));
     // TODO update tail
 
-    *new_entry = to_ext4_extent(ext);
+    memcpy(new_entry, ext, sizeof *ext);
     header->eh_entries++;
     return true;
 }
 
-bool append_to_extent_tree(extent *ext, ext4_extent_header *root_header) {
+bool append_to_extent_tree(ext4_extent *ext, ext4_extent_header *root_header) {
     if (root_header->eh_depth == 0) {
         bool success = append_in_block(root_header, ext);
         return success;
@@ -85,7 +83,7 @@ bool append_to_extent_tree(extent *ext, ext4_extent_header *root_header) {
 }
 
 void make_tree_deeper(ext4_extent_header *root_header) {
-    uint32_t block_no  = allocate_extent(1).physical_start;
+    uint32_t block_no = fat_sector_to_ext4_block(allocate_extent(1).physical_start);
     uint8_t *child_block = block_start(block_no);
     memcpy(child_block, root_header, 5 * sizeof *root_header);  // copy header and all nodes from the inode
 
@@ -105,26 +103,28 @@ void make_tree_deeper(ext4_extent_header *root_header) {
     };
 }
 
-void add_extent(extent *ext, uint32_t inode_number) {
+void add_extent(fat_extent *fext, uint32_t inode_number) {
+    ext4_extent eext = to_ext4_extent(fext);
     ext4_inode *inode = &get_existing_inode(inode_number);
     ext4_extent_header *header = &(inode->ext_header);
-    bool success = append_to_extent_tree(ext, header);
+    bool success = append_to_extent_tree(&eext, header);
 
     if (!success) {
         make_tree_deeper(header);
         // attempt adding extent again, should succeed this time
-        append_to_extent_tree(ext, header);
+        append_to_extent_tree(&eext, header);
     }
 
-    add_extent_to_block_bitmap(ext->physical_start, ext->physical_start + ext->length);
-    inode->i_blocks_lo += ext->length;
+    uint64_t extent_start_block = from_lo_hi(eext.ee_start_lo, eext.ee_start_hi);
+    add_extent_to_block_bitmap(extent_start_block, extent_start_block + eext.ee_len);
+    inode->i_blocks_lo += eext.ee_len;
 }
 
 void set_extents(uint32_t inode_number, fat_dentry *dentry, StreamArchiver *read_stream) {
     set_size(inode_number, dentry->file_size);
-    extent *current_extent = (extent *) iterateStreamArchiver(read_stream, false, sizeof *current_extent);
+    fat_extent *current_extent = (fat_extent *) iterateStreamArchiver(read_stream, false, sizeof *current_extent);
     while (current_extent != NULL) {
         add_extent(current_extent, inode_number);
-        current_extent = (extent *) iterateStreamArchiver(read_stream, false, sizeof *current_extent);
+        current_extent = (fat_extent *) iterateStreamArchiver(read_stream, false, sizeof *current_extent);
     }
 }
