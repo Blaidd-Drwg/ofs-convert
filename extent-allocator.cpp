@@ -22,7 +22,7 @@ bool can_be_used() {
     return false;
 }
 
-fat_extent allocate_extent(uint32_t max_length) {
+fat_extent allocate_extent(uint16_t max_length) {
     while(!can_be_used());
     fat_extent result;
     result.physical_start = allocator.index_in_fat;

@@ -76,7 +76,7 @@ uint32_t* reserve_children_count(StreamArchiver* write_stream) {
 }
 
 void resettle_extent(fat_extent& input_extent, StreamArchiver* write_stream) {
-    for(uint32_t i = 0; i < input_extent.length; ) {
+    for(uint16_t i = 0; i < input_extent.length; ) {
         fat_extent fragment = allocate_extent(input_extent.length - i);
         fragment.logical_start = input_extent.logical_start + i;
         *reserve_extent(write_stream) = fragment;
@@ -122,8 +122,9 @@ void aggregate_extents(uint32_t cluster_no, StreamArchiver* write_stream) {
     fat_extent current_extent {0, 1, cluster_no};
     while(true) {
         bool is_end = cluster_no >= FAT_END_OF_CHAIN,
-             is_consecutive = cluster_no == current_extent.physical_start + current_extent.length;
-        if(is_end || !is_consecutive) {
+             is_consecutive = cluster_no == current_extent.physical_start + current_extent.length,
+             has_max_length = current_extent.length == UINT16_MAX;
+        if(is_end || !is_consecutive || has_max_length) {
             find_blocked_extent_fragments(current_extent, write_stream);
             current_extent.logical_start += current_extent.length;
             current_extent.length = 1;

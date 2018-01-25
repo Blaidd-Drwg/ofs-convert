@@ -71,7 +71,7 @@ struct __attribute__((packed)) boot_sector {
 // This struct is not defined by FAT
 struct fat_extent {
     uint32_t logical_start;  // First file cluster number that this extent covers
-    uint32_t length;  // Number of clusters covered by extent
+    uint16_t length;  // Number of clusters covered by extent
     uint32_t physical_start;  // Physical cluster number to which this extent points
 };
 
