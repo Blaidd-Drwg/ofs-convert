@@ -12,8 +12,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <time.h>
 
-uint32_t first_free_inode_no = 0;
+uint32_t first_free_inode_no = EXT4_ROOT_INODE + 1;
+
+void save_root_inode(ext4_inode *inode) {
+    add_inode(*inode, EXT4_ROOT_INODE);
+}
 
 uint32_t save_inode(ext4_inode *inode) {
     add_inode(*inode, first_free_inode_no);
@@ -37,6 +42,23 @@ uint32_t build_inode(fat_dentry *dentry) {
 
     // TODO checksum
     return save_inode(&inode);
+}
+
+void build_root_inode() {
+    ext4_inode inode;
+    memset(&inode, 0, sizeof inode);
+    inode.i_mode = static_cast<uint16_t>(0733) | S_IFDIR;
+    inode.i_uid = ROOT_UID;
+    inode.i_gid = ROOT_GID;
+    inode.i_atime = (uint32_t) time(NULL);
+    inode.i_ctime = (uint32_t) time(NULL);
+    inode.i_mtime = (uint32_t) time(NULL);
+    inode.i_links_count = 1;
+    inode.i_flags = 0x80000;  // uses extents
+    inode.ext_header = init_extent_header();
+
+    // TODO checksum
+    save_root_inode(&inode);
 }
 
 void set_size(uint32_t inode_no, uint64_t size) {

@@ -6,6 +6,8 @@
 
 constexpr uint16_t S_IFDIR = 0x4000;
 constexpr uint16_t S_IFREG = 0x8000;
+constexpr uint16_t ROOT_UID = 0;
+constexpr uint16_t ROOT_GID = 0;
 
 struct ext4_inode {
     uint16_t    i_mode;        /* File mode */
@@ -44,6 +46,7 @@ struct ext4_inode {
 };
 
 uint32_t build_inode(fat_dentry *dentry);
+void build_root_inode();
 void set_size(uint32_t inode_number, uint64_t size);
 
 #endif //OFS_EXT4_INODE_H

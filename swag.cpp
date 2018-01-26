@@ -12,6 +12,10 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+void build_ext4_root(StreamArchiver *read_stream) {
+    build_root_inode();
+}
+
 void build_ext4_metadata_tree(uint32_t parent_inode_number, StreamArchiver *read_stream) {
     uint32_t child_count = *(uint32_t*) iterateStreamArchiver(read_stream, false,
                                                               sizeof child_count);
@@ -20,7 +24,7 @@ void build_ext4_metadata_tree(uint32_t parent_inode_number, StreamArchiver *read
 
     int position_in_block = 0;
     ext4_dentry *previous_dentry;
-    int block_count = 1;
+    uint32_t block_count = 1;
 
     for (uint32_t i = 0; i < child_count; i++) {
         fat_dentry *f_dentry = (fat_dentry *) iterateStreamArchiver(read_stream, false,

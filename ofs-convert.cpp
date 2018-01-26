@@ -34,5 +34,6 @@ int main(int argc, const char** argv) {
     aggregate_extents(boot_sector.root_cluster_no, &write_stream);
     traverse(&extent_stream, &write_stream);
 
-    //build_ext4_metadata_tree(EXT4_ROOT_INODE, &read_stream);
+    build_ext4_root(&read_stream);
+    build_ext4_metadata_tree(EXT4_ROOT_INODE, &read_stream);
 }

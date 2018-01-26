@@ -5,6 +5,7 @@
 
 #include "fat.h"
 
+constexpr uint32_t EXT4_ROOT_INODE = 2;
 constexpr uint16_t EXT4_MAGIC = 0xEF53;
 constexpr uint16_t EXT4_STATE_CLEANLY_UNMOUNTED = 0x0001;
 // Signals support for dynamic inode sizes
