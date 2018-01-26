@@ -5,6 +5,7 @@
 #include "ext4_inode.h"
 #include "extent-allocator.h"
 #include "stream-archiver.h"
+#include "tree_builder.h"
 
 #include <string.h>
 #include <stdint.h>
@@ -12,7 +13,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-void build_ext4_root(StreamArchiver *read_stream) {
+void build_ext4_root() {
     build_root_inode();
 }
 
