@@ -83,6 +83,7 @@ struct meta_info {
     uint32_t dentries_per_cluster;
     uint32_t sectors_before_data;
     uint8_t* data_start;
+    uint32_t* fat_copy_start;
 };
 
 struct fat_dentry {
