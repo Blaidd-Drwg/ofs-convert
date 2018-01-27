@@ -60,7 +60,7 @@ void build_root_inode() {
 void build_lost_found_inode() {
     ext4_inode inode;
     memset(&inode, 0, sizeof inode);
-    inode.i_mode = static_cast<uint16_t>(0733) | S_IFDIR;
+    inode.i_mode = 0;
     inode.i_uid = ROOT_UID;
     inode.i_gid = ROOT_GID;
     inode.i_atime = (uint32_t) time(NULL);

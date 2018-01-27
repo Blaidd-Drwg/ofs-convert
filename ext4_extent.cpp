@@ -117,7 +117,7 @@ void add_extent(fat_extent *fext, uint32_t inode_number) {
 
     uint64_t extent_start_block = from_lo_hi(eext.ee_start_lo, eext.ee_start_hi);
     add_extent_to_block_bitmap(extent_start_block, extent_start_block + eext.ee_len);
-    inode->i_blocks_lo += eext.ee_len;
+    inode->i_blocks_lo += eext.ee_len * block_size() / 512;
 }
 
 void set_extents(uint32_t inode_number, fat_dentry *dentry, StreamArchiver *read_stream) {
