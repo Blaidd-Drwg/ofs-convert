@@ -19,21 +19,6 @@ uint8_t *block_start(uint64_t block_no) {
 }
 
 
-uint16_t calc_reserved_gdt_blocks() {
-    // This logic is copied from the one in the official mke2fs (http://e2fsprogs.sourceforge.net/)
-    uint64_t block_count = from_lo_hi(sb.s_blocks_count_lo, sb.s_blocks_count_hi);
-    uint32_t max_blocks = block_count > (0xFFFFFFFF / 1024)
-                          ? 0xFFFFFFFF
-                          : static_cast<uint32_t>(block_count * 1024);
-    uint32_t rsv_groups = ceildiv(max_blocks, sb.s_blocks_per_group);
-    uint32_t rsv_blocks = ceildiv(rsv_groups * sb.s_desc_size, block_size()) - gdt_block_count();
-
-    // No idea why this limit is needed
-    return static_cast<uint16_t>(min(rsv_blocks,
-                                     block_size() / sizeof(uint32_t)));
-}
-
-
 void init_ext4_sb() {
     uint32_t bytes_per_block = boot_sector.bytes_per_sector * boot_sector.sectors_per_cluster;
     uint64_t partition_bytes = boot_sector.bytes_per_sector * static_cast<uint64_t>(sector_count());
@@ -47,7 +32,6 @@ void init_ext4_sb() {
     sb.s_magic = EXT4_MAGIC;
     sb.s_state = EXT4_STATE_CLEANLY_UNMOUNTED;
     sb.s_feature_incompat = EXT4_FEATURE_INCOMPAT_64BIT | EXT4_FEATURE_INCOMPAT_EXTENTS;
-    sb.s_feature_compat = EXT4_FEATURE_COMPAT_RESIZE_INODE;
     sb.s_desc_size = EXT4_64BIT_DESC_SIZE;
     sb.s_inode_size = EXT4_INODE_SIZE;
     sb.s_rev_level = EXT4_DYNAMIC_REV;
@@ -59,7 +43,6 @@ void init_ext4_sb() {
     sb.s_blocks_per_group = bytes_per_block * 8;
     uint64_t block_count = partition_bytes / bytes_per_block;
     set_lo_hi(sb.s_blocks_count_lo, sb.s_blocks_count_hi, block_count);
-    sb.s_reserved_gdt_blocks = calc_reserved_gdt_blocks();
 
     // These have to have these values even if bigalloc is disabled
     sb.s_log_cluster_size = sb.s_log_block_size;
@@ -73,7 +56,6 @@ void init_ext4_sb() {
     // bytes_per_block * 8, but this is easier to implement.
     if (block_count % sb.s_blocks_per_group < block_group_overhead() + 50) {
         set_lo_hi(sb.s_blocks_count_lo, sb.s_blocks_count_hi, block_count);
-        sb.s_reserved_gdt_blocks = calc_reserved_gdt_blocks();
     }
 
     sb.s_inodes_per_group = min(
