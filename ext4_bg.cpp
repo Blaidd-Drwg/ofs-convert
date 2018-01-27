@@ -97,7 +97,6 @@ void add_inode(const ext4_inode& inode, uint32_t inode_num) {
     uint32_t bg_num = (inode_num - 1) / sb.s_inodes_per_group;
     uint32_t num_in_bg = (inode_num - 1) % sb.s_inodes_per_group;
     ext4_group_desc& bg = group_descs[bg_num];
-    uint32_t blk_size = block_size();
 
     uint8_t *inode_bitmap = block_start(from_lo_hi(bg.bg_inode_bitmap_lo, bg.bg_inode_bitmap_hi));
     uint8_t *inode_table = block_start(from_lo_hi(bg.bg_inode_table_lo, bg.bg_inode_table_hi));
@@ -106,6 +105,19 @@ void add_inode(const ext4_inode& inode, uint32_t inode_num) {
     memcpy(inode_table + num_in_bg * sb.s_inode_size, &inode, sizeof(inode));
 
     decr_lo_hi(bg.bg_free_inodes_count_lo, bg.bg_free_inodes_count_hi);
+    if (inode.i_mode & S_IFDIR) {
+        incr_lo_hi(bg.bg_used_dirs_count_lo, bg.bg_used_dirs_count_hi);
+    }
+}
+
+
+void add_reserved_inode(const ext4_inode& inode, uint32_t inode_num) {
+    uint32_t bg_num = (inode_num - 1) / sb.s_inodes_per_group;
+    uint32_t num_in_bg = (inode_num - 1) % sb.s_inodes_per_group;
+    ext4_group_desc& bg = group_descs[bg_num];
+
+    uint8_t *inode_table = block_start(from_lo_hi(bg.bg_inode_table_lo, bg.bg_inode_table_hi));
+    memcpy(inode_table + num_in_bg * sb.s_inode_size, &inode, sizeof(inode));
     if (inode.i_mode & S_IFDIR) {
         incr_lo_hi(bg.bg_used_dirs_count_lo, bg.bg_used_dirs_count_hi);
     }
