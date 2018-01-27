@@ -52,9 +52,25 @@ void bitmap_set_bit(uint8_t* bitmap, uint32_t bit_num) {
     bitmap[bit_num / 8] |= 1 << (bit_num % 8);
 }
 
+#define fillLSBs(len) ((1<<(len))-1)
+
 void bitmap_set_bits(uint8_t* bitmap, uint32_t begin, uint32_t end) {
-    // TODO: More efficient
-    for (uint32_t i = begin; i < end; ++i) {
-        bitmap_set_bit(bitmap, i);
-    }
+    // for(uint32_t i = begin; i < end; ++i)
+    //    bitmap_set_bit(bitmap, i);
+
+    typedef uint32_t segement;
+    uint32_t segementLength = sizeof(segement)*8;
+    segement* ptr = reinterpret_cast<segement*>(bitmap);
+    uint32_t beginOffset = begin%segementLength,
+             endOffset = end%segementLength;
+    begin /= segementLength;
+    end /= segementLength;
+
+    if(begin < end) {
+        ptr[begin++] |= ~fillLSBs(beginOffset);
+        while(begin < end)
+            ptr[begin++] = -1;
+        ptr[begin] |= fillLSBs(endOffset);
+    } else
+        ptr[begin] |= (~fillLSBs(beginOffset)) & fillLSBs(endOffset);
 }
