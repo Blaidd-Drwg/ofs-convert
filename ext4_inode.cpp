@@ -24,7 +24,7 @@ uint32_t save_inode(ext4_inode *inode) {
 uint32_t build_inode(fat_dentry *dentry) {
     ext4_inode inode;
     memset(&inode, 0, sizeof inode);
-    inode.i_mode = static_cast<uint16_t>(0733) | (is_dir(dentry) ? S_IFREG : S_IFDIR);
+    inode.i_mode = static_cast<uint16_t>(0755) | (is_dir(dentry) ? S_IFREG : S_IFDIR);
     inode.i_uid = geteuid() & 0xFFFF;
     inode.l_i_uid_high = geteuid() >> 16;
     inode.i_gid = getegid() & 0xFFFF;
