@@ -14,7 +14,7 @@
 #include <sys/types.h>
 #include <time.h>
 
-uint32_t first_free_inode_no = EXT4_ROOT_INODE + 1;
+uint32_t first_free_inode_no = EXT4_FIRST_NON_RSV_INODE;
 
 void save_root_inode(ext4_inode *inode) {
     add_inode(*inode, EXT4_ROOT_INODE);

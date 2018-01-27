@@ -5,9 +5,6 @@
 #include "ext4.h"
 #include "ext4_inode.h"
 
-constexpr uint32_t EXT4_BG_INODE_UNINIT = 0x0001;
-constexpr uint32_t EXT4_BG_BLOCK_UNINIT = 0x0002;
-
 extern struct ext4_group_desc *group_descs;
 
 struct ext4_group_desc {
@@ -40,7 +37,7 @@ uint32_t block_group_count();
 
 uint64_t block_group_start(uint32_t num);
 
-uint32_t block_group_blocks();
+uint32_t gdt_block_count();
 
 uint32_t block_group_overhead();
 

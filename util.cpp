@@ -15,6 +15,7 @@ uint64_t from_lo_hi(uint32_t lo, uint32_t hi) {
     return static_cast<uint64_t>(hi) << 32 | lo;
 }
 
+
 uint32_t from_lo_hi(uint16_t lo, uint16_t hi) {
     return static_cast<uint32_t>(hi) << 16 | lo;
 }
@@ -39,6 +40,11 @@ void set_lo_hi(uint16_t& lo, uint16_t& hi, uint32_t value) {
 
 
 void incr_lo_hi(uint16_t& lo, uint16_t& hi, uint32_t diff) {
+    set_lo_hi(lo, hi, from_lo_hi(lo, hi) + diff);
+}
+
+
+void incr_lo_hi(uint32_t& lo, uint32_t& hi, uint64_t diff) {
     set_lo_hi(lo, hi, from_lo_hi(lo, hi) + diff);
 }
 

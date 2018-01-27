@@ -26,7 +26,7 @@ uint16_t calc_reserved_gdt_blocks() {
                           ? 0xFFFFFFFF
                           : static_cast<uint32_t>(block_count * 1024);
     uint32_t rsv_groups = ceildiv(max_blocks, sb.s_blocks_per_group);
-    uint32_t rsv_blocks = ceildiv(rsv_groups * sb.s_desc_size, block_size()) - block_group_blocks();
+    uint32_t rsv_blocks = ceildiv(rsv_groups * sb.s_desc_size, block_size()) - gdt_block_count();
 
     // No idea why this limit is needed
     return static_cast<uint16_t>(min(rsv_blocks,
@@ -51,6 +51,8 @@ void init_ext4_sb() {
     sb.s_desc_size = EXT4_64BIT_DESC_SIZE;
     sb.s_inode_size = EXT4_INODE_SIZE;
     sb.s_rev_level = EXT4_DYNAMIC_REV;
+    sb.s_errors = EXT4_ERRORS_DEFAULT;
+    sb.s_first_ino = EXT4_FIRST_NON_RSV_INODE;
 
     sb.s_log_block_size = log2(bytes_per_block) - EXT4_BLOCK_SIZE_MIN_LOG2;
     sb.s_first_data_block = bytes_per_block == 1024 ? 1 : 0;
@@ -58,6 +60,10 @@ void init_ext4_sb() {
     uint64_t block_count = partition_bytes / bytes_per_block;
     set_lo_hi(sb.s_blocks_count_lo, sb.s_blocks_count_hi, block_count);
     sb.s_reserved_gdt_blocks = calc_reserved_gdt_blocks();
+
+    // These have to have these values even if bigalloc is disabled
+    sb.s_log_cluster_size = sb.s_log_block_size;
+    sb.s_clusters_per_group = sb.s_blocks_per_group;
 
     // Same logic as used in mke2fs: If the last block group would support have
     // fewer than 50 data blocks, than reduce the block count and ignore the

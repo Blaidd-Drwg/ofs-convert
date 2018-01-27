@@ -17,6 +17,8 @@ void set_lo_hi(uint16_t& lo, uint16_t& hi, uint32_t value);
 
 void incr_lo_hi(uint16_t& lo, uint16_t& hi, uint32_t diff = 1);
 
+void incr_lo_hi(uint32_t& lo, uint32_t& hi, uint64_t diff = 1);
+
 void decr_lo_hi(uint16_t& lo, uint16_t& hi, uint32_t diff = 1);
 
 template <class T>

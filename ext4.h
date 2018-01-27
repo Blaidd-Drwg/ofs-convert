@@ -6,12 +6,14 @@
 #include "fat.h"
 
 constexpr uint32_t EXT4_ROOT_INODE = 2;
+constexpr uint32_t EXT4_FIRST_NON_RSV_INODE = 11;
 constexpr uint16_t EXT4_MAGIC = 0xEF53;
 constexpr uint16_t EXT4_STATE_CLEANLY_UNMOUNTED = 0x0001;
 // Signals support for dynamic inode sizes
 constexpr uint32_t EXT4_DYNAMIC_REV = 1;
 constexpr uint32_t EXT4_BLOCK_SIZE_MIN_LOG2 = 10;
 constexpr uint32_t EXT4_64BIT_DESC_SIZE = 64;
+constexpr uint16_t EXT4_ERRORS_DEFAULT = 1;  // Continue after error
 
 constexpr uint32_t EXT4_FEATURE_INCOMPAT_EXTENTS = 0x0040;
 constexpr uint32_t EXT4_FEATURE_INCOMPAT_64BIT = 0x0080;
