@@ -49,10 +49,10 @@ void decr_lo_hi(uint16_t& lo, uint16_t& hi, uint32_t diff) {
 
 
 void bitmap_set_bit(uint8_t* bitmap, uint32_t bit_num) {
-    bitmap[bit_num / 8] |= 1 << (bit_num % 8);
+    bitmap[bit_num / 8] |= 1U << (bit_num % 8);
 }
 
-#define fillLSBs(len) ((1<<(len))-1)
+#define fillLSBs(len) ((1U<<(len))-1U)
 
 void bitmap_set_bits(uint8_t* bitmap, uint32_t begin, uint32_t end) {
     // for(uint32_t i = begin; i < end; ++i)
@@ -60,17 +60,14 @@ void bitmap_set_bits(uint8_t* bitmap, uint32_t begin, uint32_t end) {
 
     typedef uint32_t segement;
     uint32_t segementLength = sizeof(segement)*8;
-    segement* ptr = reinterpret_cast<segement*>(bitmap);
-    uint32_t beginOffset = begin%segementLength,
-             endOffset = end%segementLength;
-    begin /= segementLength;
-    end /= segementLength;
+    segement *beginPtr = &reinterpret_cast<segement*>(bitmap)[begin/segementLength],
+             *endPtr = &reinterpret_cast<segement*>(bitmap)[end/segementLength];
 
-    if(begin < end) {
-        ptr[begin++] |= ~fillLSBs(beginOffset);
-        while(begin < end)
-            ptr[begin++] = -1;
-        ptr[begin] |= fillLSBs(endOffset);
-    } else
-        ptr[begin] |= (~fillLSBs(beginOffset)) & fillLSBs(endOffset);
+    if(beginPtr < endPtr) {
+        *beginPtr++ |= ~fillLSBs(begin%segementLength);
+        while(beginPtr < endPtr)
+            *beginPtr++ = -1;
+        *beginPtr |= fillLSBs(end%segementLength);
+    } else if(beginPtr == endPtr)
+        *beginPtr |= (~fillLSBs(begin%segementLength)) & fillLSBs(end%segementLength);
 }
