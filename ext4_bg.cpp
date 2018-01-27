@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include "ext4_bg.h"
 #include "ext4_inode.h"
@@ -38,8 +39,14 @@ fat_extent *create_block_group_meta_extents() {
     uint32_t bg_count = block_group_count();
     auto * extents = static_cast<fat_extent *>(malloc(bg_count * sizeof(fat_extent)));
     uint32_t bg_overhead = block_group_overhead();
+    if (bg_overhead > 0xFFFF) {
+        fprintf(stderr, "Block group overhead too large\n");
+        exit(1);
+    }
+
     for (uint32_t i = 0; i < block_group_count(); ++i) {
-        extents[i] = {0, bg_overhead, static_cast<uint32_t>(block_group_start(i))};
+        extents[i] = {0, static_cast<uint16_t>(bg_overhead),
+                      static_cast<uint32_t>(block_group_start(i))};
     }
 
     return extents;
