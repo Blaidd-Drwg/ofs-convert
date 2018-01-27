@@ -36,8 +36,8 @@ int main(int argc, const char** argv) {
     traverse(&extent_stream, &write_stream);
 
     build_ext4_root();
-    build_lost_found();
     build_ext4_metadata_tree(EXT4_ROOT_INODE, EXT4_ROOT_INODE, &read_stream);
+    build_lost_found();
     finalize_block_groups_on_disk();
 
     closePartition(&partition);

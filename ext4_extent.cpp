@@ -128,3 +128,15 @@ void set_extents(uint32_t inode_number, fat_dentry *dentry, StreamArchiver *read
         current_extent = (fat_extent *) iterateStreamArchiver(read_stream, false, sizeof *current_extent);
     }
 }
+
+ext4_extent last_extent(uint32_t inode_number) {
+    ext4_inode *inode = &get_existing_inode(inode_number);
+    ext4_extent_header *header = &(inode->ext_header);
+
+    while(header->eh_depth) {
+        ext4_extent_idx *last_idx = (ext4_extent_idx *) (header + header->eh_entries);
+        header = (ext4_extent_header *) block_start(from_lo_hi(last_idx->ei_leaf_lo, last_idx->ei_leaf_hi));
+    }
+
+    return *(ext4_extent *) (header + header->eh_entries);
+}

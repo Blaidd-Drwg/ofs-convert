@@ -18,8 +18,11 @@ void build_ext4_root() {
 }
 
 void build_lost_found() {
+    ext4_extent last_root_extent = last_extent(EXT4_ROOT_INODE);
+    uint32_t logical_start = last_root_extent.ee_block + last_root_extent.ee_len;
+
     fat_extent dentry_extent = allocate_extent(1);
-    dentry_extent.logical_start = 0;
+    dentry_extent.logical_start = logical_start;
     add_extent(&dentry_extent, EXT4_ROOT_INODE);
 
     build_lost_found_inode();
@@ -28,8 +31,7 @@ void build_lost_found() {
     dentry.rec_len = block_size();
     *dentry_address = dentry;
 
-    // TODO set right after traversing
-    set_size(EXT4_ROOT_INODE, block_size());
+    set_size(EXT4_ROOT_INODE, get_size(EXT4_ROOT_INODE) + block_size());
 }
 
 
@@ -80,7 +82,7 @@ void build_ext4_metadata_tree(uint32_t dir_inode_no, uint32_t parent_inode_no, S
             while (iterateStreamArchiver(read_stream, false, sizeof(fat_extent))) ;  // consume extents
             build_ext4_metadata_tree(inode_number, dir_inode_no, read_stream);
         }
-     }
+    }
+    add_extent(&dentry_extent, dir_inode_no);
     set_size(dir_inode_no, block_count * block_size());
-    // add last extent to dir?
 }
