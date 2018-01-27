@@ -1,4 +1,5 @@
 #include "fat.h"
+#include "ext4.h"
 #include "ext4_extent.h"
 #include "ext4_dentry.h"
 #include "extent-allocator.h"
@@ -41,7 +42,7 @@ struct ext4_dentry *build_dentry(uint32_t inode_number, StreamArchiver *read_str
     ext_dentry->name_len = 0;
 
     uint8_t *ext_name = ext_dentry->name;
-    uint8_t *ext_name_limit = ext_name + 255;
+    uint8_t *ext_name_limit = ext_name + EXT4_MAX_NAME_LENGTH;
     uint16_t *segment = (uint16_t *) iterateStreamArchiver(read_stream, false,
                                                            LFN_ENTRY_LENGTH * sizeof *segment);
     while (segment != NULL) {
@@ -53,4 +54,13 @@ struct ext4_dentry *build_dentry(uint32_t inode_number, StreamArchiver *read_str
     }
     ext_dentry->rec_len = ext_dentry->name_len + 8;
     return ext_dentry;
+}
+
+ext4_dentry build_lost_found_dentry() {
+    ext4_dentry dentry;
+    dentry.inode = EXT4_LOST_FOUND_INODE;
+    dentry.name_len = 10;
+    memcpy(dentry.name, "lost+found", dentry.name_len);
+    dentry.rec_len = dentry.name_len + 8;
+    return dentry;
 }

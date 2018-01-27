@@ -17,6 +17,19 @@ void build_ext4_root() {
     build_root_inode();
 }
 
+void build_lost_found() {
+    fat_extent dentry_extent = allocate_extent(1);
+    dentry_extent.logical_start = 0;
+    add_extent(&dentry_extent, EXT4_ROOT_INODE);
+
+    build_lost_found_inode();
+    ext4_dentry *dentry_address = (ext4_dentry *) block_start(fat_sector_to_ext4_block(dentry_extent.physical_start));
+    *dentry_address = build_lost_found_dentry();
+
+    // TODO set right after traversing
+    set_size(EXT4_ROOT_INODE, block_size());
+}
+
 void build_ext4_metadata_tree(uint32_t parent_inode_number, StreamArchiver *read_stream) {
     uint32_t child_count = *(uint32_t*) iterateStreamArchiver(read_stream, false,
                                                               sizeof child_count);

@@ -9,7 +9,7 @@ constexpr uint16_t S_IFREG = 0x8000;
 constexpr uint16_t ROOT_UID = 0;
 constexpr uint16_t ROOT_GID = 0;
 
-struct __attribute__((packed)) ext4_inode {
+struct ext4_inode {
     uint16_t    i_mode;        /* File mode */
     uint16_t    i_uid;        /* Low 16 bits of Owner Uid */
     uint32_t    i_size_lo;    /* Size in bytes */
@@ -47,6 +47,7 @@ struct __attribute__((packed)) ext4_inode {
 
 uint32_t build_inode(fat_dentry *dentry);
 void build_root_inode();
+void build_lost_found_inode();
 void set_size(uint32_t inode_number, uint64_t size);
 
 #endif //OFS_EXT4_INODE_H
