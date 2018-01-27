@@ -14,7 +14,7 @@ struct boot_sector boot_sector;
 struct meta_info meta_info;
 
 uint64_t fat_sector_to_ext4_block(uint32_t sector_no) {
-    return sector_no + meta_info.sectors_before_data;
+    return (sector_no - FAT_START_INDEX) + meta_info.sectors_before_data;
 }
 
 uint32_t *fat_entry(uint32_t cluster_no) {
