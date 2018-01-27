@@ -143,3 +143,17 @@ uint32_t sector_count() {
            : boot_sector.sector_count;
 
 }
+
+void read_volume_label(uint8_t* out) {
+    if (boot_sector.ext_boot_signature == 0x28) {
+        out[0] = 0;
+    } else {
+        size_t i = 10;
+        while (boot_sector.volume_label[i] == ' ') {
+            i--;
+        }
+
+        out[i + 1] = 0;
+        memcpy(out, boot_sector.volume_label, i + 1);
+    }
+}

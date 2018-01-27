@@ -2,8 +2,12 @@
 #include "ext4_bg.h"
 #include "util.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <time.h>
+#include <uuid/uuid.h>
 
 
 ext4_super_block sb;
@@ -37,6 +41,10 @@ void init_ext4_sb() {
     sb.s_rev_level = EXT4_DYNAMIC_REV;
     sb.s_errors = EXT4_ERRORS_DEFAULT;
     sb.s_first_ino = EXT4_FIRST_NON_RSV_INODE;
+    sb.s_max_mnt_count = UINT16_MAX;
+    sb.s_mkfs_time = static_cast<uint32_t>(time(NULL));
+    uuid_generate(sb.s_uuid);
+    read_volume_label(reinterpret_cast<uint8_t *>(sb.s_volume_name));
 
     sb.s_log_block_size = log2(bytes_per_block) - EXT4_BLOCK_SIZE_MIN_LOG2;
     sb.s_first_data_block = bytes_per_block == 1024 ? 1 : 0;

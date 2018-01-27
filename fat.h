@@ -26,6 +26,7 @@ bool is_free_cluster(uint32_t cluster_entry);
 void lfn_cpy(uint16_t *dest, uint8_t *src);
 void read_short_name(struct fat_dentry *dentry, uint16_t *name);
 uint32_t sector_count();
+void read_volume_label(uint8_t* out);
 
 
 // Index in the FAT of the first data cluster
