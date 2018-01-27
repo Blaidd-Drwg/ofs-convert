@@ -9,7 +9,7 @@ constexpr uint16_t S_IFREG = 0x8000;
 constexpr uint16_t ROOT_UID = 0;
 constexpr uint16_t ROOT_GID = 0;
 
-struct ext4_inode {
+struct __attribute__((packed)) ext4_inode {
     uint16_t    i_mode;        /* File mode */
     uint16_t    i_uid;        /* Low 16 bits of Owner Uid */
     uint32_t    i_size_lo;    /* Size in bytes */
