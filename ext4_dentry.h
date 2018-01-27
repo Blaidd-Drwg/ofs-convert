@@ -14,6 +14,8 @@ struct ext4_dentry {
 };
 
 ext4_dentry *build_dentry(uint32_t inode_number, StreamArchiver *read_stream);
+ext4_dentry build_dot_dir_dentry(uint32_t dir_inode_number);
+ext4_dentry build_dot_dot_dir_dentry(uint32_t parent_inode_number);
 ext4_dentry build_lost_found_dentry();
 
 #endif //OFS_EXT4_DENTRY_H

@@ -56,11 +56,23 @@ struct ext4_dentry *build_dentry(uint32_t inode_number, StreamArchiver *read_str
     return ext_dentry;
 }
 
-ext4_dentry build_lost_found_dentry() {
+ext4_dentry build_special_dentry(uint32_t inode_no, const char *name) {
     ext4_dentry dentry;
-    dentry.inode = EXT4_LOST_FOUND_INODE;
-    dentry.name_len = 10;
-    memcpy(dentry.name, "lost+found", dentry.name_len);
+    dentry.inode = inode_no;
+    dentry.name_len = strlen(name);
+    memcpy(dentry.name, name, dentry.name_len);
     dentry.rec_len = dentry.name_len + 8;
     return dentry;
+}
+
+ext4_dentry build_dot_dir_dentry(uint32_t dir_inode_no) {
+    return build_special_dentry(dir_inode_no, ".");
+}
+
+ext4_dentry build_dot_dot_dir_dentry(uint32_t parent_inode_no) {
+    return build_special_dentry(parent_inode_no, "..");
+}
+
+ext4_dentry build_lost_found_dentry() {
+    return build_special_dentry(EXT4_LOST_FOUND_INODE, "lost+found");
 }
