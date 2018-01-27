@@ -26,4 +26,6 @@ uint32_t ceildiv(T a, T b) {
 
 void bitmap_set_bit(uint8_t* bitmap, uint32_t bit_num);
 
+void bitmap_set_bits(uint8_t* bitmap, uint32_t begin, uint32_t end);
+
 #endif //OFS_CONVERT_UTIL_H

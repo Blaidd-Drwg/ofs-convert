@@ -51,3 +51,10 @@ void decr_lo_hi(uint16_t& lo, uint16_t& hi, uint32_t diff) {
 void bitmap_set_bit(uint8_t* bitmap, uint32_t bit_num) {
     bitmap[bit_num / 8] |= 1 << (bit_num % 8);
 }
+
+void bitmap_set_bits(uint8_t* bitmap, uint32_t begin, uint32_t end) {
+    // TODO: More efficient
+    for (uint32_t i = begin; i < end; ++i) {
+        bitmap_set_bit(bitmap, i);
+    }
+}
