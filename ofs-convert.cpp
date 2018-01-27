@@ -37,6 +37,7 @@ int main(int argc, const char** argv) {
 
     build_ext4_root();
     build_ext4_metadata_tree(EXT4_ROOT_INODE, &read_stream);
+    finalize_block_groups_on_disk();
 
     closePartition(&partition);
 }

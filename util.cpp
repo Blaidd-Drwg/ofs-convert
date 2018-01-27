@@ -2,7 +2,7 @@
 
 
 uint32_t log2(uint32_t value) {
-    return sizeof(value) * 8 - __builtin_clz(value);
+    return sizeof(value) * 8 - __builtin_clz(value) - 1;
 }
 
 

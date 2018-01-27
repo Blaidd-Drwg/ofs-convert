@@ -29,7 +29,7 @@ uint32_t block_group_overhead() {
 }
 
 
-uint32_t block_group_start(uint32_t num) {
+uint64_t block_group_start(uint32_t num) {
     return sb.s_blocks_per_group * num + sb.s_first_data_block;
 }
 
@@ -39,7 +39,7 @@ fat_extent *create_block_group_meta_extents() {
     auto * extents = static_cast<fat_extent *>(malloc(bg_count * sizeof(fat_extent)));
     uint32_t bg_overhead = block_group_overhead();
     for (uint32_t i = 0; i < block_group_count(); ++i) {
-        extents[i] = {0, bg_overhead, block_group_start(i)};
+        extents[i] = {0, bg_overhead, static_cast<uint32_t>(block_group_start(i))};
     }
 
     return extents;
@@ -72,7 +72,7 @@ void add_inode(const ext4_inode& inode, uint32_t inode_num) {
     uint32_t bg_num = (inode_num - 1) / sb.s_inodes_per_group;
     uint32_t num_in_bg = (inode_num - 1) % sb.s_inodes_per_group;
     ext4_group_desc& bg = group_descs[bg_num];
-    uint32_t bg_block_start = block_group_start(bg_num);
+    uint64_t bg_block_start = block_group_start(bg_num);
     uint32_t blk_size = block_size();
 
     uint8_t *inode_bitmap = block_start(bg_block_start + from_lo_hi(bg.bg_inode_bitmap_lo, bg.bg_inode_bitmap_hi));
@@ -123,7 +123,18 @@ ext4_inode& get_existing_inode(uint32_t inode_num) {
     uint32_t bg_num = (inode_num - 1) / sb.s_inodes_per_group;
     uint32_t num_in_bg = (inode_num - 1) % sb.s_inodes_per_group;
     ext4_group_desc& bg = group_descs[bg_num];
-    uint32_t bg_block_start = block_group_start(bg_num);
+    uint64_t bg_block_start = block_group_start(bg_num);
     uint8_t *inode_table = block_start(bg_block_start + from_lo_hi(bg.bg_inode_table_lo, bg.bg_inode_table_hi));
     return reinterpret_cast<ext4_inode*>(inode_table)[num_in_bg];
+}
+
+
+void finalize_block_groups_on_disk() {
+    uint32_t bg_count = block_group_count();
+    for (uint32_t i = 0; i < bg_count; ++i) {
+        uint64_t bg_block_start = block_group_start(i);
+        uint32_t sb_offset = (i == 0 && block_size() != 1024) ? 1024 : 0;
+        memcpy(block_start(bg_block_start) + sb_offset, &sb, sizeof(ext4_super_block));
+        memcpy(block_start(bg_block_start + 1), group_descs, bg_count * sizeof(ext4_group_desc));
+    }
 }
