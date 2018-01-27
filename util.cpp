@@ -64,16 +64,16 @@ void bitmap_set_bits(uint8_t* bitmap, uint32_t begin, uint32_t end) {
     // for(uint32_t i = begin; i < end; ++i)
     //    bitmap_set_bit(bitmap, i);
 
-    typedef uint32_t segement;
-    uint32_t segementLength = sizeof(segement)*8;
-    segement *beginPtr = &reinterpret_cast<segement*>(bitmap)[begin/segementLength],
-             *endPtr = &reinterpret_cast<segement*>(bitmap)[end/segementLength];
+    typedef uint32_t segment;
+    uint32_t segmentLength = sizeof(segment)*8;
+    segment *beginPtr = &reinterpret_cast<segment*>(bitmap)[begin/segmentLength],
+             *endPtr = &reinterpret_cast<segment*>(bitmap)[end/segmentLength];
 
     if(beginPtr < endPtr) {
-        *beginPtr++ |= ~fillLSBs(begin%segementLength);
+        *beginPtr++ |= ~fillLSBs(begin%segmentLength);
         while(beginPtr < endPtr)
             *beginPtr++ = -1;
-        *beginPtr |= fillLSBs(end%segementLength);
+        *beginPtr |= fillLSBs(end%segmentLength);
     } else if(beginPtr == endPtr)
-        *beginPtr |= (~fillLSBs(begin%segementLength)) & fillLSBs(end%segementLength);
+        *beginPtr |= (~fillLSBs(begin%segmentLength)) & fillLSBs(end%segmentLength);
 }
