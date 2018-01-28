@@ -14,7 +14,7 @@
 #include <sys/types.h>
 #include <time.h>
 
-uint32_t first_free_inode_no = EXT4_FIRST_NON_RSV_INODE;
+uint32_t first_free_inode_no = EXT4_FIRST_NON_RSV_INODE + 1;  // account for lost+found
 
 uint32_t save_inode(ext4_inode *inode) {
     add_inode(*inode, first_free_inode_no);

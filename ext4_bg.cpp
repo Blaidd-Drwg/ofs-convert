@@ -74,7 +74,7 @@ void init_ext4_group_descs() {
         ext4_group_desc& bg = group_descs[i];
         uint64_t bg_start_block = block_group_start(i);
         uint32_t block_count = block_group_block_count(i);
-        uint32_t used_inodes = i == 0 ? EXT4_FIRST_NON_RSV_INODE - 1 : 0;
+        uint32_t used_inodes = i == 0 ? EXT4_FIRST_NON_RSV_INODE : 0;
 
         uint64_t block_bitmap_block = bg_start_block + 1 + gdt_blocks + sb.s_reserved_gdt_blocks;
         uint64_t inode_bitmap_block = bg_start_block + 2 + gdt_blocks + sb.s_reserved_gdt_blocks;
