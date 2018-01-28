@@ -47,7 +47,7 @@ struct ext4_dentry *build_dentry(uint32_t inode_number, StreamArchiver *read_str
     ext_dentry->name_len = 0;
 
     uint8_t *ext_name = ext_dentry->name;
-    uint8_t *ext_name_limit = ext_name + EXT4_MAX_NAME_LENGTH;
+    uint8_t *ext_name_limit = ext_name + EXT4_NAME_LEN - 1;
     uint16_t *segment = (uint16_t *) iterateStreamArchiver(read_stream, false,
                                                            LFN_ENTRY_LENGTH * sizeof *segment);
     while (segment != NULL) {
@@ -57,6 +57,8 @@ struct ext4_dentry *build_dentry(uint32_t inode_number, StreamArchiver *read_str
         segment = (uint16_t *) iterateStreamArchiver(read_stream, false,
                                                      LFN_ENTRY_LENGTH * sizeof *segment);
     }
+    ext_dentry->name[ext_dentry->name_len] = '\0';
+    ext_dentry->name_len++;
     ext_dentry->rec_len = next_multiple_of_four(ext_dentry->name_len + 8);
     return ext_dentry;
 }
@@ -64,8 +66,8 @@ struct ext4_dentry *build_dentry(uint32_t inode_number, StreamArchiver *read_str
 ext4_dentry build_special_dentry(uint32_t inode_no, const char *name) {
     ext4_dentry dentry;
     dentry.inode = inode_no;
-    dentry.name_len = strlen(name);
-    memcpy(dentry.name, name, dentry.name_len);
+    dentry.name_len = strlen(name) + 1;
+    strcpy((char *) dentry.name, name);
     dentry.rec_len = next_multiple_of_four(dentry.name_len + 8);
     return dentry;
 }

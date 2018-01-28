@@ -4,13 +4,13 @@
 
 struct StreamArchiver;
 
-constexpr int EXT4_MAX_NAME_LENGTH = 255;
+constexpr int EXT4_NAME_LEN = 255;
 
 struct ext4_dentry {
     uint32_t inode;     /* Inode number */
     uint16_t rec_len;   /* Directory entry length */
     uint16_t name_len;  /* Name length */
-    uint8_t  name[EXT4_MAX_NAME_LENGTH];    /* File name */
+    uint8_t  name[EXT4_NAME_LEN];    /* File name */
 };
 
 ext4_dentry *build_dentry(uint32_t inode_number, StreamArchiver *read_stream);

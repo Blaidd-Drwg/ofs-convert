@@ -2,7 +2,6 @@
 #define OFS_EXT4_EXTENT_H
 #include <stdint.h>
 
-constexpr int EXT4_NAME_LEN = 255;
 constexpr uint16_t EH_MAGIC = 0xF30A;
 
 struct fat_extent;
