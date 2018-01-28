@@ -4,12 +4,17 @@
 #include "ext4_dentry.h"
 #include "extent-allocator.h"
 #include "stream-archiver.h"
+#include "util.h"
 
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
+
+uint32_t next_multiple_of_four(uint32_t n) {
+    return ceildiv(n, 4u) * 4;
+}
 
 // Adapted from https://www.cprogramming.com/tutorial/utf8.c
 int ucs2toutf8(uint8_t *dest, uint8_t *dest_end, uint16_t *src, int src_size) {
@@ -52,7 +57,7 @@ struct ext4_dentry *build_dentry(uint32_t inode_number, StreamArchiver *read_str
         segment = (uint16_t *) iterateStreamArchiver(read_stream, false,
                                                      LFN_ENTRY_LENGTH * sizeof *segment);
     }
-    ext_dentry->rec_len = ext_dentry->name_len + 8;
+    ext_dentry->rec_len = next_multiple_of_four(ext_dentry->name_len + 8);
     return ext_dentry;
 }
 
@@ -61,7 +66,7 @@ ext4_dentry build_special_dentry(uint32_t inode_no, const char *name) {
     dentry.inode = inode_no;
     dentry.name_len = strlen(name);
     memcpy(dentry.name, name, dentry.name_len);
-    dentry.rec_len = dentry.name_len + 8;
+    dentry.rec_len = next_multiple_of_four(dentry.name_len + 8);
     return dentry;
 }
 

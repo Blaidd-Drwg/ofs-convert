@@ -83,6 +83,11 @@ void build_ext4_metadata_tree(uint32_t dir_inode_no, uint32_t parent_inode_no, S
             build_ext4_metadata_tree(inode_number, dir_inode_no, read_stream);
         }
     }
+
+    if (previous_dentry) {
+        previous_dentry->rec_len += block_size() - position_in_block;
+    }
+
     add_extent(&dentry_extent, dir_inode_no);
     set_size(dir_inode_no, block_count * block_size());
 }
