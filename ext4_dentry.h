@@ -5,6 +5,7 @@
 struct StreamArchiver;
 
 constexpr int EXT4_NAME_LEN = 255;
+constexpr int EXT4_DOT_DENTRY_SIZE = 12;
 
 struct ext4_dentry {
     uint32_t inode;     /* Inode number */
