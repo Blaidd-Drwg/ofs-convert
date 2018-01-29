@@ -19,26 +19,27 @@ uint32_t next_multiple_of_four(uint32_t n) {
 // Adapted from https://www.cprogramming.com/tutorial/utf8.c
 int ucs2toutf8(uint8_t *dest, uint8_t *dest_end, uint16_t *src, int src_size) {
     uint16_t ch;
+    uint8_t *pos = dest;
     for (int i = 0; src[i]!=0 && i < src_size; i++) {
         ch = src[i];
         if (ch < 0x80) {
-            if (dest >= dest_end)
-                return dest_end - dest;
-            *dest++ = (char)ch;
+            if (pos >= dest_end)
+                return pos - dest;
+            *pos++ = (char)ch;
         } else if (ch < 0x800) {
-            if (dest >= dest_end-1)
-                return dest_end - dest;
-            *dest++ = (ch>>6) | 0xC0;
-            *dest++ = (ch & 0x3F) | 0x80;
+            if (pos >= dest_end-1)
+                return pos - dest;
+            *pos++ = (ch>>6) | 0xC0;
+            *pos++ = (ch & 0x3F) | 0x80;
         } else {
-            if (dest >= dest_end-2)
-                return dest_end - dest;
-            *dest++ = (ch>>12) | 0xE0;
-            *dest++ = ((ch>>6) & 0x3F) | 0x80;
-            *dest++ = (ch & 0x3F) | 0x80;
+            if (pos >= dest_end-2)
+                return pos - dest;
+            *pos++ = (ch>>12) | 0xE0;
+            *pos++ = ((ch>>6) & 0x3F) | 0x80;
+            *pos++ = (ch & 0x3F) | 0x80;
         }
     }
-    return dest_end - dest;
+    return pos - dest;
 }
 
 struct ext4_dentry *build_dentry(uint32_t inode_number, StreamArchiver *read_stream) {
