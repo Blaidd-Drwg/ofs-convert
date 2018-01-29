@@ -116,7 +116,7 @@ void find_blocked_extent_fragments(const fat_extent& input_extent, StreamArchive
 }
 
 void aggregate_extents(uint32_t cluster_no, StreamArchiver* write_stream) {
-    fat_extent current_extent {0, 1, cluster_no};
+    fat_extent current_extent {0, 0, cluster_no};
     while(true) {
         bool is_end = cluster_no >= FAT_END_OF_CHAIN,
              is_consecutive = cluster_no == current_extent.physical_start + current_extent.length - 1,
