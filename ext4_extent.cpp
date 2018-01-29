@@ -121,12 +121,12 @@ void add_extent(fat_extent *fext, uint32_t inode_number) {
 }
 
 void set_extents(uint32_t inode_number, fat_dentry *dentry, StreamArchiver *read_stream) {
-    set_size(inode_number, dentry->file_size);
     fat_extent *current_extent = (fat_extent *) iterateStreamArchiver(read_stream, false, sizeof *current_extent);
     while (current_extent != NULL) {
         add_extent(current_extent, inode_number);
         current_extent = (fat_extent *) iterateStreamArchiver(read_stream, false, sizeof *current_extent);
     }
+    set_size(inode_number);
 }
 
 ext4_extent last_extent(uint32_t inode_number) {
