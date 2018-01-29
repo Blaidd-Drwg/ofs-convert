@@ -17,6 +17,10 @@ void build_ext4_root() {
     build_root_inode();
 }
 
+void skip_child_count(StreamArchiver *read_stream) {
+    while (iterateStreamArchiver(read_stream, false, sizeof(uint32_t))) ;
+}
+
 void skip_dir_extents(StreamArchiver *read_stream) {
     while (iterateStreamArchiver(read_stream, false, sizeof(fat_extent))) ;
 }
@@ -91,6 +95,7 @@ void build_ext4_metadata_tree(uint32_t dir_inode_no, uint32_t parent_inode_no, S
 
         if (!is_dir(f_dentry)) {
             set_extents(inode_number, f_dentry, read_stream);
+            skip_child_count(read_stream);
         } else {
             incr_links_count(dir_inode_no);
             build_ext4_metadata_tree(inode_number, dir_inode_no, read_stream);
