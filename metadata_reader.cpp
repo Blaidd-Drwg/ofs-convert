@@ -65,7 +65,6 @@ fat_dentry* reserve_dentry(StreamArchiver* write_stream) {
 
 fat_extent* reserve_extent(StreamArchiver* write_stream) {
     void* ptr = iterateStreamArchiver(write_stream, true, sizeof(fat_extent));
-    cutStreamArchiver(write_stream);
     return reinterpret_cast<fat_extent*>(ptr);
 }
 
@@ -134,6 +133,7 @@ void aggregate_extents(uint32_t cluster_no, StreamArchiver* write_stream) {
             break;
         cluster_no = *fat_entry(cluster_no);
     }
+    cutStreamArchiver(write_stream);
 }
 
 fat_dentry* read_lfn(fat_dentry* first_entry, StreamArchiver* extent_stream, uint16_t* name[], int lfn_entry_count, struct cluster_read_state* state) {
