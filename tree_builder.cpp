@@ -39,7 +39,7 @@ void build_lost_found() {
     fat_extent root_dentry_extent = allocate_extent(1);
     ext4_extent last_root_extent = last_extent(EXT4_ROOT_INODE);
     root_dentry_extent.logical_start = last_root_extent.ee_block + last_root_extent.ee_len;
-    add_extent(&root_dentry_extent, EXT4_ROOT_INODE);
+    register_extent(&root_dentry_extent, EXT4_ROOT_INODE);
 
     build_lost_found_inode();
     ext4_dentry *dentry_address = (ext4_dentry *) cluster_start(root_dentry_extent.physical_start);
@@ -54,7 +54,7 @@ void build_lost_found() {
     uint8_t *lost_found_dentry_p = cluster_start(lost_found_dentry_extent.physical_start);
     ext4_dentry *dot_dot_dentry = build_dot_dirs(EXT4_LOST_FOUND_INODE, EXT4_ROOT_INODE, lost_found_dentry_p);
     dot_dot_dentry->rec_len = block_size() - EXT4_DOT_DENTRY_SIZE;
-    add_extent(&lost_found_dentry_extent, EXT4_LOST_FOUND_INODE);
+    register_extent(&lost_found_dentry_extent, EXT4_LOST_FOUND_INODE);
     set_size(EXT4_LOST_FOUND_INODE, block_size());
 }
 
@@ -65,7 +65,6 @@ void build_ext4_metadata_tree(uint32_t dir_inode_no, uint32_t parent_inode_no, S
     iterateStreamArchiver(read_stream, false, sizeof child_count);
     fat_extent dentry_extent = allocate_extent(1);
     dentry_extent.logical_start = 0;
-
     uint32_t block_count = 1;
 
     uint8_t *dentry_block_start = cluster_start(dentry_extent.physical_start);
@@ -81,7 +80,7 @@ void build_ext4_metadata_tree(uint32_t dir_inode_no, uint32_t parent_inode_no, S
         if (e_dentry->rec_len > block_size() - position_in_block) {
             previous_dentry->rec_len += block_size() - position_in_block;
 
-            add_extent(&dentry_extent, dir_inode_no);
+            register_extent(&dentry_extent, dir_inode_no);
 
             dentry_extent = allocate_extent(1);
             dentry_extent.logical_start = block_count++;
@@ -106,6 +105,6 @@ void build_ext4_metadata_tree(uint32_t dir_inode_no, uint32_t parent_inode_no, S
         previous_dentry->rec_len += block_size() - position_in_block;
     }
 
-    add_extent(&dentry_extent, dir_inode_no);
+    register_extent(&dentry_extent, dir_inode_no);
     set_size(dir_inode_no, block_count * block_size());
 }

@@ -44,6 +44,11 @@ void incr_lo_hi(uint16_t& lo, uint16_t& hi, uint32_t diff) {
 }
 
 
+void incr_lo_hi(uint32_t& lo, uint16_t& hi, uint64_t diff) {
+    set_lo_hi(lo, hi, from_lo_hi(lo, static_cast<uint32_t>(hi)) + diff);
+}
+
+
 void incr_lo_hi(uint32_t& lo, uint32_t& hi, uint64_t diff) {
     set_lo_hi(lo, hi, from_lo_hi(lo, hi) + diff);
 }
