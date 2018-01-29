@@ -50,5 +50,6 @@ void build_root_inode();
 void build_lost_found_inode();
 void set_size(uint32_t inode_number, uint64_t size);
 uint64_t get_size(uint32_t inode_number);
+void incr_links_count(uint32_t inode_no);
 
 #endif //OFS_EXT4_INODE_H

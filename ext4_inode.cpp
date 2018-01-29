@@ -85,3 +85,8 @@ uint64_t get_size(uint32_t inode_no) {
     ext4_inode& inode = get_existing_inode(inode_no);
     return from_lo_hi(inode.i_size_lo, inode.i_size_high);
 }
+
+void incr_links_count(uint32_t inode_no) {
+    ext4_inode& inode = get_existing_inode(inode_no);
+    inode.i_links_count++;
+}
