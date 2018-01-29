@@ -42,7 +42,7 @@ void build_lost_found() {
     ext4_dentry lost_found_dentry = build_lost_found_dentry();
     lost_found_dentry.rec_len = block_size();
     *dentry_address = lost_found_dentry;
-    set_size(EXT4_ROOT_INODE);
+    set_size(EXT4_ROOT_INODE, get_size(EXT4_ROOT_INODE) + block_size());
 
     // Build . and .. dirs in lost+found
     fat_extent lost_found_dentry_extent = allocate_extent(1);
@@ -51,7 +51,7 @@ void build_lost_found() {
     ext4_dentry *dot_dot_dentry = build_dot_dirs(EXT4_LOST_FOUND_INODE, EXT4_ROOT_INODE, lost_found_dentry_p);
     dot_dot_dentry->rec_len = block_size() - EXT4_DOT_DENTRY_SIZE;
     add_extent(&lost_found_dentry_extent, EXT4_LOST_FOUND_INODE);
-    set_size(EXT4_LOST_FOUND_INODE);
+    set_size(EXT4_LOST_FOUND_INODE, block_size());
 }
 
 void build_ext4_metadata_tree(uint32_t dir_inode_no, uint32_t parent_inode_no, StreamArchiver *read_stream) {
@@ -101,5 +101,5 @@ void build_ext4_metadata_tree(uint32_t dir_inode_no, uint32_t parent_inode_no, S
     }
 
     add_extent(&dentry_extent, dir_inode_no);
-    set_size(dir_inode_no);
+    set_size(dir_inode_no, block_count * block_size());
 }

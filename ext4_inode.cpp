@@ -74,8 +74,12 @@ void build_lost_found_inode() {
     add_reserved_inode(inode, EXT4_LOST_FOUND_INODE);
 }
 
-void set_size(uint32_t inode_no) {
+void set_size(uint32_t inode_no, uint64_t size) {
     ext4_inode& inode = get_existing_inode(inode_no);
-    uint64_t blocks = from_lo_hi(inode.i_blocks_lo, inode.l_i_blocks_high);
-    set_lo_hi(inode.i_size_lo, inode.i_size_high, blocks * 512);
+    set_lo_hi(inode.i_size_lo, inode.i_size_high, size);
+}
+
+uint64_t get_size(uint32_t inode_no) {
+    ext4_inode& inode = get_existing_inode(inode_no);
+    return from_lo_hi(inode.i_size_lo, inode.i_size_high);
 }
