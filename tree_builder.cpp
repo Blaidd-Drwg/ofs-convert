@@ -64,8 +64,8 @@ void build_ext4_metadata_tree(uint32_t dir_inode_no, uint32_t parent_inode_no, S
 
     uint32_t block_count = 1;
 
-    uint8_t *dentry_block = cluster_start(dentry_extent.physical_start);
-    ext4_dentry *previous_dentry = build_dot_dirs(dir_inode_no, parent_inode_no, dentry_block);
+    uint8_t *dentry_block_start = cluster_start(dentry_extent.physical_start);
+    ext4_dentry *previous_dentry = build_dot_dirs(dir_inode_no, parent_inode_no, dentry_block_start);
     int position_in_block = 2 * EXT4_DOT_DENTRY_SIZE;
 
     for (uint32_t i = 0; i < child_count; i++) {
@@ -81,11 +81,12 @@ void build_ext4_metadata_tree(uint32_t dir_inode_no, uint32_t parent_inode_no, S
 
             dentry_extent = allocate_extent(1);
             dentry_extent.logical_start = block_count++;
+            dentry_block_start = cluster_start(dentry_extent.physical_start);
         }
-        ext4_dentry *dentry_address = (ext4_dentry *) block_start(fat_sector_to_ext4_block(dentry_extent.physical_start)) + position_in_block;
-        memcpy(dentry_address, e_dentry, e_dentry->rec_len);
+        previous_dentry = (ext4_dentry *) (dentry_block_start + position_in_block);
         position_in_block += e_dentry->rec_len;
-        previous_dentry = dentry_address;
+
+        memcpy(previous_dentry, e_dentry, e_dentry->rec_len);
         free(e_dentry);
 
         if (!is_dir(f_dentry)) {
