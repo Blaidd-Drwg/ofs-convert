@@ -43,9 +43,11 @@ uint32_t build_inode(fat_dentry *dentry) {
 void build_root_inode() {
     ext4_inode inode;
     memset(&inode, 0, sizeof inode);
-    inode.i_mode = static_cast<uint16_t>(0733) | S_IFDIR;
-    inode.i_uid = ROOT_UID;
-    inode.i_gid = ROOT_GID;
+    inode.i_mode = static_cast<uint16_t>(0755) | S_IFDIR;
+    inode.i_uid = geteuid() & 0xFFFF;
+    inode.l_i_uid_high = geteuid() >> 16;
+    inode.i_gid = getegid() & 0xFFFF;
+    inode.l_i_gid_high = getegid() >> 16;
     inode.i_atime = (uint32_t) time(NULL);
     inode.i_ctime = (uint32_t) time(NULL);
     inode.i_mtime = (uint32_t) time(NULL);
@@ -60,7 +62,7 @@ void build_root_inode() {
 void build_lost_found_inode() {
     ext4_inode inode;
     memset(&inode, 0, sizeof inode);
-    inode.i_mode = static_cast<uint16_t>(0733) | S_IFDIR;
+    inode.i_mode = static_cast<uint16_t>(0755) | S_IFDIR;
     inode.i_uid = ROOT_UID;
     inode.i_gid = ROOT_GID;
     inode.i_atime = (uint32_t) time(NULL);
