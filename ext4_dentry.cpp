@@ -20,7 +20,7 @@ uint32_t next_multiple_of_four(uint32_t n) {
 int ucs2toutf8(uint8_t *dest, uint8_t *dest_end, uint16_t *src, int src_size) {
     uint16_t ch;
     uint8_t *pos = dest;
-    for (int i = 0; src[i]!=0 && i < src_size; i++) {
+    for (int i = 0; i < src_size && src[i]; i++) {
         ch = src[i];
         if (ch < 0x80) {
             if (pos >= dest_end)
