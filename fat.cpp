@@ -48,7 +48,7 @@ bool is_invalid(struct fat_dentry *dentry) {
 }
 
 bool is_dir_table_end(struct fat_dentry *dentry) {
-    return *(uint8_t *) dentry == 0x00;
+    return !dentry || *(uint8_t *) dentry == 0x00;
 }
 
 bool is_dot_dir(struct fat_dentry *dentry) {
