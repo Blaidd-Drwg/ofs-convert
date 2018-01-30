@@ -3,6 +3,7 @@
 #include "extent-allocator.h"
 #include "metadata_reader.h"
 #include "partition.h"
+#include "visualizer.h"
 #include "stream-archiver.h"
 #include "tree_builder.h"
 
@@ -34,6 +35,8 @@ int main(int argc, const char** argv) {
 
     aggregate_extents(boot_sector.root_cluster_no, &write_stream);
     traverse(&extent_stream, &write_stream);
+
+    visualizer_render_to_file("partition.svg", partition.fileStat.st_size / meta_info.cluster_size);
 
     build_ext4_root();
     build_ext4_metadata_tree(EXT4_ROOT_INODE, EXT4_ROOT_INODE, &read_stream);

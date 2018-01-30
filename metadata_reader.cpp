@@ -1,4 +1,5 @@
 #include "fat.h"
+#include "visualizer.h"
 #include "stream-archiver.h"
 #include "extent-allocator.h"
 
@@ -108,6 +109,7 @@ void find_blocked_extent_fragments(const fat_extent& input_extent, StreamArchive
         fragment.length = fragment_physical_end - fragment.physical_start;
         fragment.logical_start = input_extent.logical_start + (input_extent.physical_start - fragment.physical_start);
         fragment_physical_start = fragment_physical_end;
+        visualizer_add_block_range({BlockRange::Payload, fragment.physical_start, fragment.length});
 
         if(is_blocked)
             resettle_extent(fragment, write_stream);
@@ -123,6 +125,7 @@ void aggregate_extents(uint32_t cluster_no, StreamArchiver* write_stream) {
              is_consecutive = cluster_no == current_extent.physical_start + current_extent.length - 1,
              has_max_length = current_extent.length == UINT16_MAX;
         if(is_end || !is_consecutive || has_max_length) {
+            find_blocked_extent_fragments(current_extent, write_stream);
             current_extent.logical_start += current_extent.length;
             current_extent.length = 1;
             current_extent.physical_start = cluster_no;
