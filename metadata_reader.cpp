@@ -109,8 +109,6 @@ void find_blocked_extent_fragments(const fat_extent& input_extent, StreamArchive
         fragment.logical_start = input_extent.logical_start + (input_extent.physical_start - fragment.physical_start);
         fragment_physical_start = fragment_physical_end;
 
-        printf("\tfragment: %d %d %d %d\n", fragment.logical_start, fragment.length, fragment.physical_start, is_blocked);
-
         if(is_blocked)
             resettle_extent(fragment, write_stream);
         else
@@ -119,14 +117,12 @@ void find_blocked_extent_fragments(const fat_extent& input_extent, StreamArchive
 }
 
 void aggregate_extents(uint32_t cluster_no, StreamArchiver* write_stream) {
-    fat_extent current_extent {0, 0, cluster_no};
+    fat_extent current_extent {0, 1, cluster_no};
     while(true) {
         bool is_end = cluster_no >= FAT_END_OF_CHAIN,
              is_consecutive = cluster_no == current_extent.physical_start + current_extent.length - 1,
              has_max_length = current_extent.length == UINT16_MAX;
         if(is_end || !is_consecutive || has_max_length) {
-            printf("aggregate_extents: %d %d %d, %d %d %d\n", is_end, is_consecutive, has_max_length, current_extent.logical_start, current_extent.length, current_extent.physical_start);
-            find_blocked_extent_fragments(current_extent, write_stream);
             current_extent.logical_start += current_extent.length;
             current_extent.length = 1;
             current_extent.physical_start = cluster_no;
