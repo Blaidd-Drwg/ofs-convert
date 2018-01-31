@@ -2,6 +2,7 @@
 #define OFS_CONVERT_VISUALIZER_H
 
 #include <stdlib.h>
+#include <stdint.h>
 
 struct BlockRange {
     enum Type {
