@@ -188,7 +188,7 @@ void traverse(StreamArchiver* dir_extent_stream, StreamArchiver* write_stream) {
 }
 
 void init_stream_archiver(StreamArchiver* stream) {
-    pageSize = 32;
+    pageSize = 4096;
     memset(stream, 0, sizeof *stream);
     cutStreamArchiver(stream);
 }
