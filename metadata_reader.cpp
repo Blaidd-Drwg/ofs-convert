@@ -122,7 +122,7 @@ void aggregate_extents(uint32_t cluster_no, StreamArchiver* write_stream) {
     fat_extent current_extent {0, 1, cluster_no};
     uint32_t next_cluster_no = *fat_entry(cluster_no);
 
-    while(true) {
+    while(cluster_no) {  // if cluster_no == 0, it's a zero-length file
         bool is_end = next_cluster_no >= FAT_END_OF_CHAIN,
              is_consecutive = next_cluster_no == current_extent.physical_start + current_extent.length,
              has_max_length = current_extent.length == UINT16_MAX;
