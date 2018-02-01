@@ -24,12 +24,9 @@ bool can_be_used() {
 
 fat_extent allocate_extent(uint16_t max_length) {
     while(!can_be_used());
-    fat_extent result;
-    result.physical_start = allocator.index_in_fat;
-    while(can_be_used()) {
-        result.length = allocator.index_in_fat - result.physical_start;
-        if(result.length == max_length)
-            break;
+    fat_extent result = {0, 1, allocator.index_in_fat};
+    while(result.length < max_length && can_be_used()) {
+        result.length = allocator.index_in_fat - result.physical_start + 1;
     }
     return result;
 }
