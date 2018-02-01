@@ -4,6 +4,7 @@
 #include "ext4_bg.h"
 #include "ext4_inode.h"
 #include "util.h"
+#include "visualizer.h"
 
 
 ext4_group_desc *group_descs;
@@ -54,6 +55,7 @@ fat_extent *create_block_group_meta_extents() {
     for (uint32_t i = 0; i < block_group_count(); ++i) {
         extents[i] = {0, static_cast<uint16_t>(bg_overhead),
                       static_cast<uint32_t>(block_group_start(i))};
+        visualizer_add_block_range({BlockRange::BlockGroupHeader, extents[i].physical_start, extents[i].length});
     }
 
     return extents;

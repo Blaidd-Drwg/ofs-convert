@@ -84,6 +84,7 @@ void resettle_extent(fat_extent& input_extent, StreamArchiver* write_stream) {
         fragment.logical_start = input_extent.logical_start + i;
         *reserve_extent(write_stream) = fragment;
         memcpy(cluster_start(fragment.physical_start), cluster_start(input_extent.physical_start + i), fragment.length * meta_info.cluster_size);
+        visualizer_add_block_range({BlockRange::ResettledPayload, fragment.physical_start, fragment.length});
         i += fragment.length;
     }
 }
@@ -109,7 +110,7 @@ void find_blocked_extent_fragments(const fat_extent& input_extent, StreamArchive
         fragment.length = fragment_physical_end - fragment.physical_start;
         fragment.logical_start = input_extent.logical_start + (input_extent.physical_start - fragment.physical_start);
         fragment_physical_start = fragment_physical_end;
-        visualizer_add_block_range({BlockRange::Payload, fragment.physical_start, fragment.length});
+        visualizer_add_block_range({BlockRange::OriginalPayload, fragment.physical_start, fragment.length});
 
         if(is_blocked)
             resettle_extent(fragment, write_stream);

@@ -6,9 +6,12 @@
 
 struct BlockRange {
     enum Type {
-        Payload
+        FAT,
+        OriginalPayload,
+        ResettledPayload,
+        BlockGroupHeader
     } type;
-    uint32_t begin, length;
+    uint64_t begin, length;
     BlockRange* next;
 };
 
