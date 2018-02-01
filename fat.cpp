@@ -13,8 +13,8 @@
 struct boot_sector boot_sector;
 struct meta_info meta_info;
 
-uint64_t fat_sector_to_ext4_block(uint32_t sector_no) {
-    return (sector_no - FAT_START_INDEX) + meta_info.sectors_before_data;
+uint64_t fat_cluster_to_ext4_block(uint32_t cluster_no) {
+    return (cluster_no - FAT_START_INDEX) + meta_info.sectors_before_data / boot_sector.sectors_per_cluster;
 }
 
 uint32_t *fat_entry(uint32_t cluster_no) {
@@ -135,6 +135,11 @@ void set_meta_info(uint8_t *fs) {
     uint64_t fat_size = boot_sector.sectors_per_fat * boot_sector.bytes_per_sector;
     meta_info.fat_copy_start = (uint32_t *) malloc(fat_size);
     memcpy(meta_info.fat_copy_start, meta_info.fat_start, fat_size);
+
+    if (meta_info.sectors_before_data % boot_sector.sectors_per_cluster != 0) {
+        fprintf(stderr, "FAT clusters are not aligned. Cannot convert in-place");
+        exit(1);
+    }
 }
 
 uint32_t sector_count() {
