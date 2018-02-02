@@ -85,6 +85,7 @@ void build_ext4_metadata_tree(uint32_t dir_inode_no, uint32_t parent_inode_no, S
             dentry_extent = allocate_extent(1);
             dentry_extent.logical_start = block_count++;
             dentry_block_start = cluster_start(dentry_extent.physical_start);
+            position_in_block = 0;
         }
         previous_dentry = (ext4_dentry *) (dentry_block_start + position_in_block);
         position_in_block += e_dentry->rec_len;
