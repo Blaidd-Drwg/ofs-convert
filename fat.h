@@ -7,7 +7,8 @@ void set_meta_info(uint8_t *fs);
 void read_boot_sector(uint8_t *fs);
 void recursive_traverse(uint32_t cluster_no, uint16_t *long_name);
 
-uint64_t fat_cluster_to_ext4_block(uint32_t cluster_no);
+uint64_t fat_cl_to_e4blk(uint32_t cluster_no);
+uint32_t e4blk_to_fat_cl(uint64_t block_no);
 bool is_lfn(struct fat_dentry *dentry);
 bool is_dir(struct fat_dentry *dentry);
 bool is_invalid(struct fat_dentry *dentry);

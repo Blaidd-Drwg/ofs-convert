@@ -25,7 +25,6 @@ int main(int argc, const char** argv) {
     set_meta_info(partition.ptr);
 
     init_ext4_sb();
-    init_ext4_group_descs();
     init_extent_allocator(create_block_group_meta_extents());
 
     StreamArchiver write_stream;
@@ -38,6 +37,7 @@ int main(int argc, const char** argv) {
 
     visualizer_render_to_file("partition.svg", partition.fileStat.st_size / meta_info.cluster_size);
 
+    init_ext4_group_descs();
     build_ext4_root();
     build_ext4_metadata_tree(EXT4_ROOT_INODE, EXT4_ROOT_INODE, &read_stream);
     build_lost_found();

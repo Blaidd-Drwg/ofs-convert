@@ -22,7 +22,7 @@ ext4_extent to_ext4_extent(fat_extent *fext) {
     ext4_extent eext;
     eext.ee_block = fext->logical_start;
     eext.ee_len = fext->length;
-    set_lo_hi(eext.ee_start_lo, eext.ee_start_hi, fat_cluster_to_ext4_block(fext->physical_start));
+    set_lo_hi(eext.ee_start_lo, eext.ee_start_hi, fat_cl_to_e4blk(fext->physical_start));
     return eext;
 }
 
@@ -35,7 +35,7 @@ void append_to_new_idx_path(uint16_t depth, ext4_extent *ext_to_append, ext4_ext
         fat_extent idx_ext = allocate_extent(1);
         register_extent(&idx_ext, inode_no, false);
 
-        uint32_t block_no = fat_cluster_to_ext4_block(idx_ext.physical_start);
+        uint32_t block_no = fat_cl_to_e4blk(idx_ext.physical_start);
         *idx = {
             .ei_block = ext_to_append->ee_block,
             .ei_leaf_lo = block_no,
@@ -96,7 +96,7 @@ void make_tree_deeper(ext4_extent_header *root_header, uint32_t inode_no) {
     fat_extent idx_ext = allocate_extent(1);
     register_extent(&idx_ext, inode_no, false);
 
-    uint32_t block_no = fat_cluster_to_ext4_block(idx_ext.physical_start);
+    uint64_t block_no = fat_cl_to_e4blk(idx_ext.physical_start);
     uint8_t *child_block = block_start(block_no);
     memcpy(child_block, root_header, 5 * sizeof *root_header);  // copy header and all nodes from the inode
 

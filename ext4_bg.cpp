@@ -53,8 +53,20 @@ fat_extent *create_block_group_meta_extents() {
     }
 
     for (uint32_t i = 0; i < block_group_count(); ++i) {
-        extents[i] = {0, static_cast<uint16_t>(bg_overhead),
-                      static_cast<uint32_t>(block_group_start(i))};
+        uint32_t start_cluster = e4blk_to_fat_cl(block_group_start(i));
+
+        if (start_cluster) {
+            extents[i] = {0, static_cast<uint16_t>(bg_overhead), start_cluster};
+        } else {
+            // extent would begin before first data cluster
+            uint32_t end_cluster = e4blk_to_fat_cl(block_group_start(i) + bg_overhead);
+            if (end_cluster) {
+                extents[i] = {0, end_cluster - FAT_START_INDEX, FAT_START_INDEX};
+            } else {
+                // if it's entirely before first data cluster, create dummy extent
+                extents[i] = {0, 0, 0};
+            }
+        }
         visualizer_add_block_range({BlockRange::BlockGroupHeader, extents[i].physical_start, extents[i].length});
     }
 

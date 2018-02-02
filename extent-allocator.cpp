@@ -10,8 +10,10 @@ int extent_sort_compare(const void* eA, const void* eB) {
 
 void init_extent_allocator(fat_extent *blocked_extents) {
     allocator.index_in_fat = FAT_START_INDEX;
-    allocator.blocked_extent_current = blocked_extents;
+    allocator.blocked_extents = blocked_extents;
+//  TODO set allocator.blocked_extent_count
     qsort(allocator.blocked_extents, allocator.blocked_extent_count, sizeof(fat_extent), extent_sort_compare);
+    allocator.blocked_extent_current = allocator.blocked_extents;
 }
 
 bool can_be_used() {

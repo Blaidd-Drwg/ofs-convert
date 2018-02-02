@@ -14,8 +14,14 @@
 struct boot_sector boot_sector;
 struct meta_info meta_info;
 
-uint64_t fat_cluster_to_ext4_block(uint32_t cluster_no) {
+uint64_t fat_cl_to_e4blk(uint32_t cluster_no) {
     return (cluster_no - FAT_START_INDEX) + meta_info.sectors_before_data / boot_sector.sectors_per_cluster;
+}
+
+// returns 0 if block is before the first data cluster
+uint32_t e4blk_to_fat_cl(uint64_t block_no) {
+    int64_t cluster_no = block_no + FAT_START_INDEX - meta_info.sectors_before_data / boot_sector.sectors_per_cluster;
+    return (cluster_no < FAT_START_INDEX) ? 0 : static_cast<uint32_t >(cluster_no);
 }
 
 uint32_t *fat_entry(uint32_t cluster_no) {
