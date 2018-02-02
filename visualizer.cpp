@@ -12,14 +12,17 @@ const char* type_colors[] = {
 BlockRange* block_range = NULL;
 
 void visualizer_add_block_range(BlockRange source) {
+#ifdef VISUALIZER
     BlockRange* destination = (BlockRange*)malloc(sizeof(BlockRange));
     memcpy(destination, &source, sizeof(BlockRange));
     destination->next = block_range;
     block_range = destination;
     printf("visualizer_add_block_range %llu %llu\n", block_range->begin, block_range->length);
+#endif  // VISUALIZER
 }
 
 void visualizer_render_to_file(const char* path, uint32_t block_count) {
+#ifdef VISUALIZER
     const uint32_t bar_width = 1000;
     FILE* output = fopen(path, "w+");
     if(!output)
@@ -40,4 +43,5 @@ void visualizer_render_to_file(const char* path, uint32_t block_count) {
 
     fputs("</svg>\n", output);
     fclose(output);
+#endif  // VISUALIZER
 }
