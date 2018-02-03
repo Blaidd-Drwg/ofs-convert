@@ -108,7 +108,7 @@ void find_blocked_extent_fragments(const fat_extent& input_extent, StreamArchive
         fat_extent fragment;
         fragment.physical_start = fragment_physical_start;
         fragment.length = fragment_physical_end - fragment.physical_start;
-        fragment.logical_start = input_extent.logical_start + (input_extent.physical_start - fragment.physical_start);
+        fragment.logical_start = input_extent.logical_start + (fragment.physical_start - input_extent.physical_start);
         fragment_physical_start = fragment_physical_end;
         visualizer_add_block_range({BlockRange::OriginalPayload, fragment.physical_start, fragment.length});
 
