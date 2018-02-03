@@ -119,6 +119,11 @@ void init_ext4_group_descs() {
 
 void add_inode(const ext4_inode& inode, uint32_t inode_num) {
     uint32_t bg_num = (inode_num - 1) / sb.s_inodes_per_group;
+    if (bg_num >= block_group_count()) {
+        fprintf(stderr, "Not enough inodes in your file system. All your data is trashed now, sorry!");
+        exit(1);
+    }
+
     uint32_t num_in_bg = (inode_num - 1) % sb.s_inodes_per_group;
     ext4_group_desc& bg = group_descs[bg_num];
 
