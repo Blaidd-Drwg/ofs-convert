@@ -1,5 +1,6 @@
 #include "extent-allocator.h"
 #include <stdlib.h>
+#include <cstdio>
 
 extent_allocator allocator;
 
@@ -16,11 +17,20 @@ void init_extent_allocator(fat_extent *blocked_extents, uint32_t blocked_extent_
     allocator.blocked_extent_current = allocator.blocked_extents;
 }
 
+bool fs_is_full() {
+    return allocator.blocked_extent_current - allocator.blocked_extents > allocator.blocked_extent_count;
+}
+
 bool can_be_used() {
     if(allocator.index_in_fat < allocator.blocked_extent_current->physical_start)
         return is_free_cluster(*fat_entry(allocator.index_in_fat++));
     allocator.index_in_fat = allocator.blocked_extent_current->physical_start + allocator.blocked_extent_current->length;
     ++allocator.blocked_extent_current;
+
+    if (fs_is_full()) {
+        fprintf(stderr, "File system is too small. All your data is trashed now, sorry!");
+        exit(1);
+    }
     return false;
 }
 

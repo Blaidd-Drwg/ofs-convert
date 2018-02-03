@@ -44,7 +44,7 @@ uint64_t block_group_start(uint32_t num) {
 
 
 fat_extent *create_block_group_meta_extents(uint32_t bg_count) {
-    auto * extents = static_cast<fat_extent *>(malloc(bg_count * sizeof(fat_extent)));
+    auto * extents = static_cast<fat_extent *>(malloc((bg_count + 1) * sizeof(fat_extent)));
     uint32_t bg_overhead = block_group_overhead();
     if (bg_overhead > 0xFFFF) {
         fprintf(stderr, "Block group overhead too large\n");
@@ -68,6 +68,8 @@ fat_extent *create_block_group_meta_extents(uint32_t bg_count) {
         }
         visualizer_add_block_range({BlockRange::BlockGroupHeader, extents[i].physical_start, extents[i].length});
     }
+
+    extents[bg_count] = {0, 1, static_cast<uint32_t>(block_count())};  // end of the filesystem
 
     return extents;
 }

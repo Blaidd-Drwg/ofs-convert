@@ -22,6 +22,9 @@ uint8_t *block_start(uint64_t block_no) {
     return meta_info.fs_start + block_no * block_size();
 }
 
+uint64_t block_count() {
+    return from_lo_hi(sb.s_blocks_count_lo, sb.s_blocks_count_hi);
+}
 
 void init_ext4_sb() {
     uint32_t bytes_per_block = boot_sector.bytes_per_sector * boot_sector.sectors_per_cluster;

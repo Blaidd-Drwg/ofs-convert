@@ -147,5 +147,7 @@ void init_ext4_sb();
 
 uint32_t block_size();
 
+uint64_t block_count();
+
 uint8_t *block_start(uint64_t block_no);
 #endif //OFS_CONVERT_EXT4_H
