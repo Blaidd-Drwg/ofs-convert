@@ -25,7 +25,8 @@ int main(int argc, const char** argv) {
     set_meta_info(partition.ptr);
 
     init_ext4_sb();
-    init_extent_allocator(create_block_group_meta_extents());
+    int bg_count = block_group_count();
+    init_extent_allocator(create_block_group_meta_extents(bg_count), bg_count);
 
     StreamArchiver write_stream;
     init_stream_archiver(&write_stream);

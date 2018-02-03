@@ -43,8 +43,7 @@ uint64_t block_group_start(uint32_t num) {
 }
 
 
-fat_extent *create_block_group_meta_extents() {
-    uint32_t bg_count = block_group_count();
+fat_extent *create_block_group_meta_extents(uint32_t bg_count) {
     auto * extents = static_cast<fat_extent *>(malloc(bg_count * sizeof(fat_extent)));
     uint32_t bg_overhead = block_group_overhead();
     if (bg_overhead > 0xFFFF) {
@@ -52,7 +51,7 @@ fat_extent *create_block_group_meta_extents() {
         exit(1);
     }
 
-    for (uint32_t i = 0; i < block_group_count(); ++i) {
+    for (uint32_t i = 0; i < bg_count; ++i) {
         uint32_t start_cluster = e4blk_to_fat_cl(block_group_start(i));
 
         if (start_cluster) {
