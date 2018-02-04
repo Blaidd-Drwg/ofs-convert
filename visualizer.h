@@ -11,7 +11,7 @@ struct BlockRange {
         ResettledPayload,
         BlockGroupHeader
     } type;
-    uint64_t begin, length;
+    uint64_t begin, length, tag;
     BlockRange* next;
 };
 
