@@ -22,8 +22,9 @@ bool fs_is_full() {
 }
 
 bool can_be_used() {
+    ++(allocator.index_in_fat);
     if(allocator.index_in_fat < allocator.blocked_extent_current->physical_start)
-        return is_free_cluster(*fat_entry(allocator.index_in_fat++));
+        return is_free_cluster(*fat_entry(allocator.index_in_fat));
     allocator.index_in_fat = allocator.blocked_extent_current->physical_start + allocator.blocked_extent_current->length;
     ++allocator.blocked_extent_current;
 
