@@ -109,11 +109,8 @@ void make_tree_deeper(ext4_extent_header *root_header, uint32_t inode_no) {
     root_header->eh_entries = 1;
     ext4_extent_idx *idx = (ext4_extent_idx *) (root_header + 1);
     ext4_extent *child_first_extent = (ext4_extent *)(child_header + 1);  // could also be idx, irrelevant
-    *idx = {
-        .ei_block = 0,
-        .ei_leaf_lo = block_no,
-        .ei_leaf_hi = 0
-    };
+    idx->ei_block = 0;
+    set_lo_hi(idx->ei_leaf_lo, idx->ei_leaf_hi, block_no);
 }
 
 void add_extent(ext4_extent *eext, uint32_t inode_no, ext4_inode *inode) {

@@ -60,7 +60,7 @@ fat_extent *create_block_group_meta_extents(uint32_t bg_count) {
             // extent would begin before first data cluster
             uint32_t end_cluster = e4blk_to_fat_cl(block_group_start(i) + bg_overhead);
             if (end_cluster) {
-                extents[i] = {0, end_cluster - FAT_START_INDEX, FAT_START_INDEX};
+                extents[i] = {0, static_cast<uint16_t>(end_cluster - FAT_START_INDEX), FAT_START_INDEX};
             } else {
                 // if it's entirely before first data cluster, create dummy extent
                 extents[i] = {0, 0, 0};
