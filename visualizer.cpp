@@ -33,7 +33,7 @@ void visualizer_render_to_file(const char* path, uint32_t block_count) {
     fprintf(output, "<svg viewBox=\"0 0 %d 200\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xml:space=\"preserve\">\n", bar_width);
 
     while(block_range) {
-        fprintf(output, "\t<rect x=\"%f\" y=\"0\" width=\"%f\" height=\"100\" fill=\"%s\" class=\"tag%d\"/>\n",
+        fprintf(output, "\t<rect x=\"%f\" y=\"0\" width=\"%f\" height=\"100\" fill=\"%s\" class=\"tag%llu\"/>\n",
             (float)bar_width*block_range->begin/block_count,
             (float)bar_width*block_range->length/block_count,
             type_colors[block_range->type],
@@ -42,6 +42,7 @@ void visualizer_render_to_file(const char* path, uint32_t block_count) {
         block_range = block_range->next;
     }
 
+    fputs("\t<script type=\"text/javascript\" xlink:href=\"visualizer.js\"/>\n", output);
     fputs("</svg>\n", output);
     fclose(output);
 #endif  // VISUALIZER
