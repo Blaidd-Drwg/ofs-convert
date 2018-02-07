@@ -80,18 +80,15 @@ bool has_extension(struct fat_dentry *dentry) {
 
 uint32_t fat_time_to_unix(uint16_t date, uint16_t time) {
     tm datetm;
-    memset(&datetm, 0, sizeof time);
-    datetm.tm_year = ((date & 0xFE00) >> 9) + 1980;
-    datetm.tm_mon= ((date & 0x1E0) >> 5);
+    memset(&datetm, 0, sizeof datetm);
+
+    datetm.tm_year = ((date & 0xFE00) >> 9) + 80;
+    datetm.tm_mon= ((date & 0x1E0) >> 5) - 1;
     datetm.tm_mday = date & 0x1F;
-    uint32_t unix_date = mktime(&datetm);
-
-    int hour = ((time & 0xF800) >> 11);
-    int minute = ((time & 0x7E0) >> 5);
-    int second = (time & 0x1F) * 2;
-    uint32_t unix_time = 3600 * hour + 60 * minute + second;
-
-    return unix_date + unix_time;
+    datetm.tm_hour = (time & 0xF800) >> 11;
+    datetm.tm_min = (time & 0x7E0) >> 5;
+    datetm.tm_sec = (time & 0x1F) * 2;
+    return static_cast<uint32_t>(mktime(&datetm));
 }
 
 void lfn_cpy(uint16_t *dest, uint8_t *src) {

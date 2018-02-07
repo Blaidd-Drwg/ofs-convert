@@ -30,8 +30,9 @@ uint32_t build_inode(fat_dentry *dentry) {
     inode.i_gid = getegid() & 0xFFFF;
     inode.l_i_gid_high = getegid() >> 16;
     inode.i_atime = fat_time_to_unix(dentry->access_date, 0);
-    inode.i_ctime = fat_time_to_unix(dentry->create_date, dentry->create_time);
+    inode.i_crtime = fat_time_to_unix(dentry->create_date, dentry->create_time);
     inode.i_mtime = fat_time_to_unix(dentry->mod_date, dentry->mod_time);
+    inode.i_ctime = inode.i_mtime + 1;  // mimic behavior of the Linux FAT driver
     inode.i_links_count = is_dir(dentry) ? 2 : 1; // TODO fuck hardlinks
     inode.i_flags = 0x80000;  // uses extents
     inode.ext_header = init_extent_header();
