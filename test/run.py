@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import enum
 import itertools
 import pathlib
 import shutil
@@ -12,61 +13,27 @@ NOT_ENOUGH_CLUSTERS_MSG = 'WARNING: Not enough clusters for a 32 bit FAT!'
 TOOL_TIMEOUT = 5
 
 
-class OfsConvertTest(unittest.TestCase):
-    @classmethod
-    def _add_test_method(cls, input_path):
-        if input_path.suffix == '.fat':
-            conversion_cls = ImageConversionTester
-        else:
-            conversion_cls = GenerateScriptConversionTester
-
-        def test(self):
-            conversion_cls(self, input_path).run()
-
-        meth_name = 'test_' + input_path.stem.replace('-', '_')
-        setattr(cls, meth_name, test)
-
-    @classmethod
-    def setup_test_methods(cls, ofs_convert_path, tests_dir):
-        ConversionTester.OFS_CONVERT = ofs_convert_path
-        tests_dir = pathlib.Path(tests_dir)
-        images = tests_dir.glob('**/*.fat')
-        generation_scripts = tests_dir.glob('**/*.sh')
-        for input_path in itertools.chain(images, generation_scripts):
-            cls._add_test_method(input_path)
-
-
-class ConversionTester:
-    OFS_CONVERT = None
-
+class ToolRunner:
     def __init__(self, test_case, input_path):
-        self.test_case = test_case
         self.input_path = input_path
-        self.tool_outputs = []
+        self.test_case = test_case
+        self.collected_output = []
 
-    def run(self):
-        self._clean_err_out_files()
-        try:
-            self._run_test()
-        except AssertionError:
-            self._write_tool_output()
-            raise
+    def clean(self):
+        directory = self.input_path.parent
+        prefix = self.input_path.stem
 
-    def _run_test(self):
-        raise NotImplementedError
+        err_files = directory.glob(prefix + '*.err.txt')
+        out_files = directory.glob(prefix + '*.out.txt')
+        for f in itertools.chain(err_files, out_files):
+            f.unlink()
 
-    def _save_tool_output(self, output, suffix):
-        if output:
-            name = '{}.{}.txt'.format(self.input_path.stem, suffix)
-            out_path = self.input_path.parent / name
-            self.tool_outputs.append((out_path, output))
-
-    def _write_tool_output(self):
-        for out_path, output in self.tool_outputs:
+    def write_output(self):
+        for out_path, output in self.collected_output:
             out_path.write_bytes(output)
 
-    def _run_tool(self, args, name, shell=False, err_msg=None,
-                  custom_error_checker=None):
+    def run(self, args, name, shell=False, err_msg=None,
+            custom_error_checker=None):
         try:
             proc = subprocess.run(args, shell=shell, stderr=subprocess.PIPE,
                                   stdout=subprocess.PIPE, timeout=TOOL_TIMEOUT)
@@ -80,101 +47,183 @@ class ConversionTester:
             self.test_case.assertEqual(
                 0, proc.returncode, err_msg or name + ' did not exit cleanly')
 
-    def _clean_err_out_files(self):
-        directory = self.input_path.parent
-        prefix = self.input_path.stem
+    def _save_tool_output(self, output, suffix):
+        if output:
+            name = '{}.{}.txt'.format(self.input_path.stem, suffix)
+            out_path = self.input_path.parent / name
+            self.collected_output.append((out_path, output))
 
-        err_files = directory.glob(prefix + '*.err.txt')
-        out_files = directory.glob(prefix + '*.out.txt')
-        for f in itertools.chain(err_files, out_files):
-            f.unlink()
 
-    def _convert_to_ext4(self, fat_image_path):
-        self._run_tool([self.OFS_CONVERT, str(fat_image_path)], 'conversion')
+class FsType(enum.Enum):
+    VFAT = 0
+    EXT4 = 1
+
+
+class ImageMounter:
+    class _Mount:
+        def __init__(self, tool_runner, mount_point):
+            self.tool_runner = tool_runner
+            self.mount_point = mount_point
+
+        def __enter__(self):
+            return self.mount_point
+
+        def __exit__(self, *_):
+            self.tool_runner.run(
+                ['umount', str(self.mount_point)], 'umount',
+                err_msg='umount did not exit cleanly, check mounts')
+
+    def __init__(self, tool_runner, temp_dir):
+        self._tool_runner = tool_runner
+        self._mounts_dir = temp_dir / 'mnt'
+        self._mounts_dir.mkdir()
+
+    def _make_mount_point(self, fs_type):
+        mount_point = self._mounts_dir / fs_type.name.lower()
+        mount_point.mkdir(exist_ok=True)
+        return mount_point
+
+    if sys.platform == 'darwin':
+        class _HdiUtilMount(_Mount):
+            def __exit__(self, *_):
+                self.tool_runner.run(
+                    ['hdiutil', 'eject', str(self.mount_point)],
+                    'hdiutil eject',
+                    err_msg='hdiutil eject did not exit cleanly, check mounts')
+
+        def mount(self, image_path, fs_type, readonly):
+            mount_point = self._make_mount_point(fs_type)
+            if fs_type == FsType.EXT4:
+                self._tool_runner.run(
+                    ['ext4fuse', str(image_path), str(mount_point)], 'ext4fuse',
+                    err_msg='ext4fuse mounting failed, check mounts')
+                return self._Mount(self._tool_runner, mount_point)
+            else:
+                args = ['hdiutil', 'attach', '-imagekey',
+                        'diskimage-class=CRawDiskImage', '-nobrowse']
+                if readonly:
+                    args.append('-readonly')
+                args.extend(['-mountpoint', str(mount_point), str(image_path)])
+                self._tool_runner.run(
+                    args, 'hdiutil attach',
+                    err_msg='hdiutil attach did not exit cleanly, check mounts')
+                return self._HdiUtilMount(self._tool_runner, mount_point)
+    elif sys.platform.startswith('linux'):
+        def mount(self, image_path, fs_type, readonly):
+            mount_point = self._make_mount_point(fs_type)
+            args = ['mount', '-o', 'loop', '-t', fs_type.name.lower()]
+            if readonly:
+                args.append('--read-only')
+            args.extend([str(image_path), str(mount_point)])
+            self._tool_runner.run(
+                args, 'mount',
+                err_msg='mount did not exit cleanly, check mounts')
+            return self._Mount(self._tool_runner, mount_point)
+    else:
+        raise NotImplementedError('Only implemented for macOS and Linux')
+
+
+class OfsConvertTest(unittest.TestCase):
+    _OFS_CONVERT = None
+
+    @classmethod
+    def setup_test_methods(cls, ofs_convert_path, tests_dir):
+        cls._OFS_CONVERT = ofs_convert_path
+        tests_dir = pathlib.Path(tests_dir)
+        images = tests_dir.glob('**/*.fat')
+        generation_scripts = tests_dir.glob('**/*.sh')
+        for input_path in itertools.chain(images, generation_scripts):
+            cls._add_test_method(input_path)
+
+    @classmethod
+    def _add_test_method(cls, input_path):
+        if input_path.suffix == '.fat':
+            create_fat_image = lambda *_: input_path
+        else:
+            def create_fat_image(self, *args):
+                return self._create_fat_image_from_gen_script(input_path, *args)
+
+        def test(self):
+            self._run_test(input_path, create_fat_image)
+
+        meth_name = 'test_' + input_path.stem.replace('-', '_')
+        setattr(cls, meth_name, test)
+
+    def _run_test(self, input_path, create_fat_image):
+        tool_runner = ToolRunner(self, input_path)
+        tool_runner.clean()
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = pathlib.Path(temp_dir_name)
+            image_mounter = ImageMounter(tool_runner, temp_dir)
+            try:
+                fat_image_path = create_fat_image(self, temp_dir, tool_runner,
+                                                  image_mounter)
+                ext4_image_path = temp_dir / 'ext4.img'
+                shutil.copyfile(str(fat_image_path), str(ext4_image_path))
+                self._convert_to_ext4(tool_runner, ext4_image_path)
+                self._run_fsck_ext4(tool_runner, ext4_image_path)
+                self._check_contents(tool_runner, image_mounter, fat_image_path,
+                                     ext4_image_path)
+            except AssertionError:
+                tool_runner.write_output()
+                raise
+
+    def _convert_to_ext4(self, tool_runner, fat_image_path):
+        tool_runner.run([self._OFS_CONVERT, str(fat_image_path)], 'ofs-convert')
 
     def _check_fsck_ext4_error(self, proc):
         if proc.returncode & ~12 == 0:
             err_msg = 'fsck.ext4 reported errors in image'
         else:
             err_msg = 'fsck.ext4 exited with unexpected exit code'
-        self.test_case.assertEqual(0, proc.returncode, err_msg)
+        self.assertEqual(0, proc.returncode, err_msg)
 
-    def _check_ext4_image(self, ext4_image_path):
-        self._run_tool(['fsck.ext4', '-n', '-f', str(ext4_image_path)],
-                       'fsck.ext4',
-                       custom_error_checker=self._check_fsck_ext4_error)
+    def _run_fsck_ext4(self, tool_runner, ext4_image_path):
+        tool_runner.run(['fsck.ext4', '-n', '-f', str(ext4_image_path)],
+                        'fsck.ext4',
+                        custom_error_checker=self._check_fsck_ext4_error)
 
-    if sys.platform == 'darwin':
-        def _mount_fat(self, image_path, mount_point):
-            mount_point.mkdir(exist_ok=True)
-            args = ['hdiutil', 'attach', '-imagekey',
-                    'diskimage-class=CRawDiskImage', '-nobrowse', '-mountpoint',
-                    str(mount_point), str(image_path)]
-            self._run_tool(
-                args, 'hdiutil attach',
-                err_msg='hdiutil attach did not exit cleanly, check mounts')
+    def _check_rsync_errors(self, proc):
+        self.assertEqual(
+            b'', proc.stdout,
+            'rsync reported differences between FAT and Ext4 images')
 
-        def _umount(self, mount_point):
-            args = ['hdiutil', 'eject', str(mount_point)]
-            self._run_tool(
-                args, 'hdiutil eject',
-                err_msg='hdiutil eject did not exit cleanly, check mounts')
-    elif sys.platform.startswith('linux'):
-        def _mount_fat(self, image_path, mount_point):
-            mount_point.mkdir(exist_ok=True)
-            args = ['mount', '-o', 'loop', '-t', 'vfat', str(image_path), str(mount_point)]
-            self._run_tool(args, 'mount',
-                           err_msg='mount did not exit cleanly, check mounts')
+    def _check_contents(self, tool_runner, image_mounter, fat_image_path,
+                        ext4_image_path):
+        with image_mounter.mount(fat_image_path,
+                                 FsType.VFAT, True) as fat_mount:
+            with image_mounter.mount(ext4_image_path,
+                                     FsType.EXT4, True) as ext_mount:
+                # if the fat path doesn't end in a slash, rsync wants to copy
+                # the directory and not its contents
+                formatted_path_path = str(fat_mount)
+                if not formatted_path_path.endswith('/'):
+                    formatted_path_path += '/'
+                args = ['rsync', '--dry-run', '--itemize-changes', '--archive',
+                        '--checksum', '--no-perms', '--no-owner', '--no-group',
+                        '--delete', '--exclude=/lost+found', formatted_path_path,
+                        str(ext_mount)]
+                tool_runner.run(args, 'rsync',
+                                custom_error_checker=self._check_rsync_errors)
 
-        def _umount(self, mount_point):
-            self._run_tool(['umount', str(mount_point)], 'umount',
-                           err_msg='umount did not exit cleanly, check mounts')
-    else:
-        raise NotImplementedError('Only works on macOS and Linux')
-
-
-class ImageConversionTester(ConversionTester):
-    def _run_test(self):
-        with tempfile.NamedTemporaryFile() as temp_file:
-            with self.input_path.open('rb') as src_file:
-                shutil.copyfileobj(src_file, temp_file)
-            temp_file.flush()
-            temp_file_path = pathlib.Path(temp_file.name)
-            self._convert_to_ext4(temp_file_path)
-            self._check_ext4_image(temp_file_path)
-
-
-class GenerateScriptConversionTester(ConversionTester):
     def _check_mkfs_fat_errors(self, proc):
-        self.test_case.assertEqual(0, proc.returncode,
-                                   'mkfs.fat did not exit cleanly')
+        self.assertEqual(0, proc.returncode, 'mkfs.fat did not exit cleanly')
         stderr = proc.stderr.decode('utf-8')
-        self.test_case.assertNotIn(NOT_ENOUGH_CLUSTERS_MSG, stderr,
-                                   'Too few clusters specified for FAT32')
+        self.assertNotIn(NOT_ENOUGH_CLUSTERS_MSG, stderr,
+                         'Too few clusters specified for FAT32')
 
-    def _create_fat_image(self, temp_dir):
+    def _create_fat_image_from_gen_script(self, script_path, temp_dir,
+                                          tool_runner, image_mounter):
         image_file_path = temp_dir / 'fat.img'
-
-        args_file = self.input_path.parent / (self.input_path.stem + '.mkfs')
+        args_file = script_path.parent / (script_path.stem + '.mkfs')
         mkfs_call = 'mkfs.fat {} {}'.format(image_file_path,
                                             args_file.read_text().rstrip('\n'))
-        self._run_tool(mkfs_call, 'mkfs.fat', shell=True,
-                       custom_error_checker=self._check_mkfs_fat_errors)
-
-        mount_point = temp_dir / 'mnt'
-        self._mount_fat(image_file_path, mount_point)
-        try:
-            self._run_tool([str(self.input_path), str(mount_point)],
-                           'gen script')
-        finally:
-            self._umount(mount_point)
+        tool_runner.run(mkfs_call, 'mkfs.fat', shell=True,
+                        custom_error_checker=self._check_mkfs_fat_errors)
+        with image_mounter.mount(image_file_path,
+                                 FsType.VFAT, False) as mount_point:
+            tool_runner.run([str(script_path), str(mount_point)], 'gen script')
         return image_file_path
-
-    def _run_test(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            image_path = self._create_fat_image(pathlib.Path(temp_dir))
-            self._convert_to_ext4(image_path)
-            self._check_ext4_image(image_path)
 
 
 if __name__ == '__main__':

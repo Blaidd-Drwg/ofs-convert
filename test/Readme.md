@@ -1,6 +1,6 @@
 # Usage
 
-Run `./run.py path/to/ofs-convert tests_dir`, where `tests_dir` is a directory which can contain
+Run `./run.py path/to/ofs-convert tests_dir`, where `tests_dir` is a directory which can contain:
  * `*.fat` images to test.
    Testing will be done on temporary copies.
  * `*.sh` generating scripts, with accompanying `*.mkfs` files.
@@ -15,7 +15,13 @@ Run `./run.py path/to/ofs-convert tests_dir`, where `tests_dir` is a directory w
      - and, as the last argument, the number of 1k blocks in the created image file.
        The minimum number of blocks is 66055 + 1 for 1k clusters, 132110 + 1 for 2k clusters, etc.
 
-Requires Python 3.5+, as well as `fsck.ext4` and `mkfs.fat` executables in `PATH`.
+Requires:
+ * Python 3.5+
+ * `fsck.ext4`
+ * `mkfs.fat`
+ * `rsync`
+ * support for mounting `vfat` and `ext4` partitions using `mount` (on Linux)
+ * `ext4fuse` (on macOS)
 
 If a test fails, the output (stdout, stderr) of tools will be placed in files next to the input images (i.e. `image_dir/test.fsck.ext4.err.txt` for `image_dir/test.fat`).
 No file will be created if there is no output.
