@@ -11,4 +11,4 @@ before_install:
 script:
   - cd test/container
   - ./build.sh
-  - ./run.sh
+  - OFS_CONVERT_TOOL_TIMEOUT=60 ./run.sh
