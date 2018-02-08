@@ -60,22 +60,20 @@ class OfsConvertTest(unittest.TestCase):
     def _convert_to_ext4(self, tool_runner, fat_image_path):
         tool_runner.run([self._OFS_CONVERT, str(fat_image_path)], 'ofs-convert')
 
-    def _check_fsck_ext4_error(self, proc):
-        if proc.returncode & ~12 == 0:
-            err_msg = 'fsck.ext4 reported errors in image'
-        else:
-            err_msg = 'fsck.ext4 exited with unexpected exit code'
-        self.assertEqual(0, proc.returncode, err_msg)
+    def _handle_fsck_ext4_error(self, exc):
+        if exc.returncode & ~12 == 0:
+            self.fail('fsck.ext4 reported errors in converted image')
+        return True
 
     def _run_fsck_ext4(self, tool_runner, ext4_image_path):
         tool_runner.run(['fsck.ext4', '-n', '-f', str(ext4_image_path)],
                         'fsck.ext4',
-                        custom_error_checker=self._check_fsck_ext4_error)
+                        custom_error_handler=self._handle_fsck_ext4_error)
 
-    def _check_rsync_errors(self, proc):
+    def _check_rsync_output(self, proc):
         self.assertEqual(
             b'', proc.stdout,
-            'rsync reported differences between FAT and Ext4 images')
+            'rsync reported differences between fat and ext4 images')
 
     def _check_contents(self, tool_runner, image_mounter, fat_image_path,
                         ext4_image_path):
@@ -93,13 +91,13 @@ class OfsConvertTest(unittest.TestCase):
                         '--delete', '--exclude=/lost+found', formatted_path_path,
                         str(ext_mount)]
                 tool_runner.run(args, 'rsync',
-                                custom_error_checker=self._check_rsync_errors)
+                                custom_output_checker=self._check_rsync_output)
 
-    def _check_mkfs_fat_errors(self, proc):
-        self.assertEqual(0, proc.returncode, 'mkfs.fat did not exit cleanly')
+    @staticmethod
+    def _check_mkfs_fat_output(proc):
         stderr = proc.stderr.decode('utf-8')
-        self.assertNotIn(NOT_ENOUGH_CLUSTERS_MSG, stderr,
-                         'Too few clusters specified for FAT32')
+        if NOT_ENOUGH_CLUSTERS_MSG in stderr:
+            raise Exception('Too few clusters for FAT32 specified in test case')
 
     def _create_fat_image_from_gen_script(self, input_dir, temp_dir,
                                           tool_runner, image_mounter):
@@ -108,7 +106,7 @@ class OfsConvertTest(unittest.TestCase):
         mkfs_call = 'mkfs.fat {} {}'.format(image_file_path,
                                             args_file.read_text().rstrip('\n'))
         tool_runner.run(mkfs_call, 'mkfs.fat', shell=True,
-                        custom_error_checker=self._check_mkfs_fat_errors)
+                        custom_output_checker=self._check_mkfs_fat_output)
         with image_mounter.mount(image_file_path,
                                  FsType.VFAT, False) as mount_point:
             tool_runner.run([str(input_dir / 'generate.sh'), str(mount_point)],

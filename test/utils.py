@@ -24,19 +24,26 @@ class ToolRunner:
             out_path.write_bytes(output)
 
     def run(self, args, name, shell=False, err_msg=None,
-            custom_error_checker=None):
+            custom_output_checker=None, custom_error_handler=None):
+        stderr, stdout = None, None
         try:
-            proc = subprocess.run(args, shell=shell, stderr=subprocess.PIPE,
+            proc = subprocess.run(args, check=True, shell=shell,
+                                  stderr=subprocess.PIPE,
                                   stdout=subprocess.PIPE, timeout=TOOL_TIMEOUT)
-        except subprocess.TimeoutExpired:
-            self.test_case.fail(name + ' timed out')
-        self._save_tool_output(proc.stderr, name + '.err')
-        self._save_tool_output(proc.stdout, name + '.out')
-        if custom_error_checker is not None:
-            custom_error_checker(proc)
+        except subprocess.TimeoutExpired as e:
+            stderr, stdout = e.stderr, e.stdout
+            raise
+        except subprocess.CalledProcessError as e:
+            stderr, stdout = e.stderr, e.stdout
+            if custom_error_handler is None or custom_error_handler(e):
+                raise
         else:
-            self.test_case.assertEqual(
-                0, proc.returncode, err_msg or name + ' did not exit cleanly')
+            stderr, stdout = proc.stderr, proc.stdout
+            if custom_output_checker is not None:
+                custom_output_checker(proc)
+        finally:
+            self._save_tool_output(stderr, name + '.err')
+            self._save_tool_output(stdout, name + '.out')
 
     def _save_tool_output(self, output, stem):
         if output:
