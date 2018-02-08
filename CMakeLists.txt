@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.0)
 
 project(ofs-convert)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-find_package(uuid REQUIRED)
+find_package(UUID REQUIRED)
 
 add_executable(ofs-convert
         ext4.cpp
