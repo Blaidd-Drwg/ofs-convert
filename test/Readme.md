@@ -29,6 +29,9 @@ No file will be created if there is no output.
 `run.py` can also be used as a module for a `unittest` test runner.
 In this case, the arguments must be specified using the `OFS_CONVERT` and `OFS_CONVERT_TESTS_DIR` environment variables.
 
+All shell commands are run with a timeout, defaulting to 10 seconds.
+This can be adjusted using the environment variable `OFS_CONVERT_TOOL_TIMEOUT` (in seconds).
+
 ## Requirements
 
  * Python 3.5+

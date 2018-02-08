@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import pathlib
 import shutil
 import sys
@@ -17,13 +18,15 @@ class OfsConvertTest(unittest.TestCase):
     @classmethod
     def setup_test_methods(cls, ofs_convert_path, tests_dir):
         cls._OFS_CONVERT = ofs_convert_path
+        tool_timeout = os.environ.get('OFS_CONVERT_TOOL_TIMEOUT')
+        tool_timeout = int(tool_timeout) if tool_timeout else None
         tests_dir = pathlib.Path(tests_dir)
         input_dirs = (e for e in tests_dir.glob('**/*.test') if e.is_dir())
         for input_dir in input_dirs:
-            cls._add_test_method(input_dir)
+            cls._add_test_method(input_dir, tool_timeout)
 
     @classmethod
-    def _add_test_method(cls, input_dir):
+    def _add_test_method(cls, input_dir, tool_timeout):
         fat_image_path = input_dir / 'fat.img'
         if fat_image_path.exists():
             def create_fat_image(*_args):
@@ -33,13 +36,13 @@ class OfsConvertTest(unittest.TestCase):
                 return self._create_fat_image_from_gen_script(input_dir, *args)
 
         def test(self):
-            self._run_test(input_dir, create_fat_image)
+            self._run_test(input_dir, create_fat_image, tool_timeout)
 
         meth_name = 'test_' + input_dir.stem.replace('-', '_')
         setattr(cls, meth_name, test)
 
-    def _run_test(self, input_dir, create_fat_image):
-        tool_runner = ToolRunner(self, input_dir)
+    def _run_test(self, input_dir, create_fat_image, tool_timeout):
+        tool_runner = ToolRunner(self, input_dir, tool_timeout)
         tool_runner.clean()
         with tempfile.TemporaryDirectory() as temp_dir_name:
             temp_dir = pathlib.Path(temp_dir_name)
@@ -124,7 +127,5 @@ if __name__ == '__main__':
     unittest.main(argv=sys.argv[:1])
 else:
     # Imported as a unittest module, load from env variables
-    import os
-
     OfsConvertTest.setup_test_methods(os.environ['OFS_CONVERT'],
                                       os.environ['OFS_CONVERT_TESTS_DIR'])

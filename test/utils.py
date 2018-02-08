@@ -4,14 +4,15 @@ import subprocess
 import sys
 
 
-TOOL_TIMEOUT = 5
+DEFAULT_TOOL_TIMEOUT = 10
 
 
 class ToolRunner:
-    def __init__(self, test_case, input_dir):
+    def __init__(self, test_case, input_dir, timeout=None):
         self.input_dir = input_dir
         self.test_case = test_case
         self.collected_output = []
+        self.timeout = timeout or DEFAULT_TOOL_TIMEOUT
 
     def clean(self):
         err_files = self.input_dir.glob('*.err.txt')
@@ -29,7 +30,7 @@ class ToolRunner:
         try:
             proc = subprocess.run(args, check=True, shell=shell,
                                   stderr=subprocess.PIPE,
-                                  stdout=subprocess.PIPE, timeout=TOOL_TIMEOUT)
+                                  stdout=subprocess.PIPE, timeout=self.timeout)
         except subprocess.TimeoutExpired as e:
             stderr, stdout = e.stderr, e.stdout
             raise
