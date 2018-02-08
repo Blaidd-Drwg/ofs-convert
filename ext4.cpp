@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <time.h>
 #include <uuid/uuid.h>
@@ -35,9 +36,10 @@ void init_ext4_sb() {
         exit(1);
     }
 
-    // TODO: Set all (relevant) values
+    memset(&sb, 0, sizeof(sb));
     sb.s_magic = EXT4_MAGIC;
     sb.s_state = EXT4_STATE_CLEANLY_UNMOUNTED;
+    sb.s_feature_compat = EXT4_FEATURE_COMPAT_SPARSE_SUPER2;
     sb.s_feature_incompat = EXT4_FEATURE_INCOMPAT_64BIT | EXT4_FEATURE_INCOMPAT_EXTENTS;
     sb.s_desc_size = EXT4_64BIT_DESC_SIZE;
     sb.s_inode_size = EXT4_INODE_SIZE;
@@ -65,8 +67,19 @@ void init_ext4_sb() {
     // For some reason in tests we found that mkfs.ext4 didn't follow this logic
     // and instead set sb.blocks_per_group to a value lower than
     // bytes_per_block * 8, but this is easier to implement.
-    if (block_count % sb.s_blocks_per_group < block_group_overhead() + 50) {
+    // We use the sparse_super2 logic from mke2fs, meaning that the last block
+    // group always has a super block copy.
+    if (block_count % sb.s_blocks_per_group < block_group_overhead(true) + 50) {
         set_lo_hi(sb.s_blocks_count_lo, sb.s_blocks_count_hi, block_count);
+    }
+
+    // Same logic as in mke2fs
+    uint32_t bg_count = block_group_count();
+    if (bg_count > 1) {
+        sb.s_backup_bgs[0] = 1;
+        if (bg_count > 2) {
+            sb.s_backup_bgs[1] = block_group_count() - 1;
+        }
     }
 
     sb.s_inodes_per_group = min(

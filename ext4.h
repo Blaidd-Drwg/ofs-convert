@@ -16,6 +16,7 @@ constexpr uint32_t EXT4_BLOCK_SIZE_MIN_LOG2 = 10;
 constexpr uint32_t EXT4_64BIT_DESC_SIZE = 64;
 constexpr uint16_t EXT4_ERRORS_DEFAULT = 1;  // Continue after error
 
+constexpr uint32_t EXT4_FEATURE_COMPAT_SPARSE_SUPER2 = 0x0200;
 constexpr uint32_t EXT4_FEATURE_INCOMPAT_EXTENTS = 0x0040;
 constexpr uint32_t EXT4_FEATURE_INCOMPAT_64BIT = 0x0080;
 

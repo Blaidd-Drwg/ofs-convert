@@ -33,8 +33,18 @@ uint32_t inode_table_blocks() {
 }
 
 
-uint32_t block_group_overhead() {
-    return 3 + gdt_block_count() + sb.s_reserved_gdt_blocks + inode_table_blocks();
+uint32_t block_group_overhead(bool has_sb_copy) {
+    if (has_sb_copy) {
+        return 3 + gdt_block_count() + sb.s_reserved_gdt_blocks + inode_table_blocks();
+    }
+
+    return 2 + inode_table_blocks();
+}
+
+
+uint32_t block_group_overhead(uint32_t bg_num) {
+    bool has_sb_copy = bg_num == 0 || bg_num == sb.s_backup_bgs[0] || bg_num == sb.s_backup_bgs[1];
+    return block_group_overhead(has_sb_copy);
 }
 
 
@@ -45,13 +55,14 @@ uint64_t block_group_start(uint32_t num) {
 
 fat_extent *create_block_group_meta_extents(uint32_t bg_count) {
     auto * extents = static_cast<fat_extent *>(malloc((bg_count + 1) * sizeof(fat_extent)));
-    uint32_t bg_overhead = block_group_overhead();
-    if (bg_overhead > 0xFFFF) {
-        fprintf(stderr, "Block group overhead too large\n");
-        exit(1);
-    }
 
     for (uint32_t i = 0; i < bg_count; ++i) {
+        uint32_t bg_overhead = block_group_overhead(i);
+        if (bg_overhead > 0xFFFF) {
+            fprintf(stderr, "Block group overhead too large\n");
+            exit(1);
+        }
+
         uint32_t start_cluster = e4blk_to_fat_cl(block_group_start(i));
 
         if (start_cluster) {
@@ -78,7 +89,6 @@ fat_extent *create_block_group_meta_extents(uint32_t bg_count) {
 void init_ext4_group_descs() {
     uint32_t bg_count = block_group_count();
     uint32_t gdt_blocks = gdt_block_count();
-    uint32_t bg_overhead = block_group_overhead();
     uint32_t blk_size = block_size();
     uint32_t itable_blocks = inode_table_blocks();
 
@@ -90,6 +100,7 @@ void init_ext4_group_descs() {
         uint64_t bg_start_block = block_group_start(i);
         uint32_t block_count = block_group_block_count(i);
         uint32_t used_inodes = i == 0 ? EXT4_FIRST_NON_RSV_INODE : 0;
+        uint32_t bg_overhead = block_group_overhead(i);
 
         uint64_t block_bitmap_block = bg_start_block + 1 + gdt_blocks + sb.s_reserved_gdt_blocks;
         uint64_t inode_bitmap_block = bg_start_block + 2 + gdt_blocks + sb.s_reserved_gdt_blocks;

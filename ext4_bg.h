@@ -34,25 +34,16 @@ struct ext4_group_desc {
 };
 
 uint32_t block_group_count();
-
 uint64_t block_group_start(uint32_t num);
-
 uint32_t gdt_block_count();
-
-uint32_t block_group_overhead();
-
+uint32_t block_group_overhead(bool has_sb_copy);
+uint32_t block_group_overhead(uint32_t bg_num);
 fat_extent *create_block_group_meta_extents(uint32_t bg_count);
-
 void init_ext4_group_descs();
-
 void add_inode(const ext4_inode& inode, uint32_t inode_num);
-
 void add_reserved_inode(const ext4_inode& inode, uint32_t inode_num);
-
 void add_extent_to_block_bitmap(uint64_t blocks_begin, uint64_t blocks_end);
-
 ext4_inode& get_existing_inode(uint32_t inode_num);
-
 void finalize_block_groups_on_disk();
 
 #endif //OFS_CONVERT_EXT4_BG_H
