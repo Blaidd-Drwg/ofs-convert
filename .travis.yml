@@ -1,6 +1,11 @@
 language: cpp
 sudo: required
 
+env:
+  matrix:
+    - CMAKE_CONFIGURATION=release
+    - CMAKE_CONFIGURATION=debug
+
 services:
   - docker
 
