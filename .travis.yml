@@ -1,0 +1,14 @@
+language: cpp
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get -y install realpath
+
+script:
+  - cd test/container
+  - ./build.sh
+  - ./run.sh
