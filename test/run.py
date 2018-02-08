@@ -77,8 +77,8 @@ class OfsConvertTest(unittest.TestCase):
         # Expect report about differing root directory times. These are
         # dependent on the fat driver, because fat doesn't actually store that
         # information (no dentry for the root directory)
-        self.assertEqual(
-            b'.d..t.... ./\n', proc.stdout,
+        self.assertRegex(
+            proc.stdout.decode('utf-8'), r'^\.d\.\.t\.+\ \./' + '\n$',
             'rsync reported differences between fat and ext4 images')
 
     def _check_contents(self, tool_runner, image_mounter, fat_image_path,
