@@ -14,17 +14,14 @@ TOOL_TIMEOUT = 5
 
 
 class ToolRunner:
-    def __init__(self, test_case, input_path):
-        self.input_path = input_path
+    def __init__(self, test_case, input_dir):
+        self.input_dir = input_dir
         self.test_case = test_case
         self.collected_output = []
 
     def clean(self):
-        directory = self.input_path.parent
-        prefix = self.input_path.stem
-
-        err_files = directory.glob(prefix + '*.err.txt')
-        out_files = directory.glob(prefix + '*.out.txt')
+        err_files = self.input_dir.glob('*.err.txt')
+        out_files = self.input_dir.glob('*.out.txt')
         for f in itertools.chain(err_files, out_files):
             f.unlink()
 
@@ -47,10 +44,9 @@ class ToolRunner:
             self.test_case.assertEqual(
                 0, proc.returncode, err_msg or name + ' did not exit cleanly')
 
-    def _save_tool_output(self, output, suffix):
+    def _save_tool_output(self, output, stem):
         if output:
-            name = '{}.{}.txt'.format(self.input_path.stem, suffix)
-            out_path = self.input_path.parent / name
+            out_path = self.input_dir / (stem + '.txt')
             self.collected_output.append((out_path, output))
 
 
@@ -130,27 +126,28 @@ class OfsConvertTest(unittest.TestCase):
     def setup_test_methods(cls, ofs_convert_path, tests_dir):
         cls._OFS_CONVERT = ofs_convert_path
         tests_dir = pathlib.Path(tests_dir)
-        images = tests_dir.glob('**/*.fat')
-        generation_scripts = tests_dir.glob('**/*.sh')
-        for input_path in itertools.chain(images, generation_scripts):
-            cls._add_test_method(input_path)
+        input_dirs = (e for e in tests_dir.glob('**/*.test') if e.is_dir())
+        for input_dir in input_dirs:
+            cls._add_test_method(input_dir)
 
     @classmethod
-    def _add_test_method(cls, input_path):
-        if input_path.suffix == '.fat':
-            create_fat_image = lambda *_: input_path
+    def _add_test_method(cls, input_dir):
+        fat_image_path = input_dir / 'fat.img'
+        if fat_image_path.exists():
+            def create_fat_image(*_args):
+                return fat_image_path
         else:
             def create_fat_image(self, *args):
-                return self._create_fat_image_from_gen_script(input_path, *args)
+                return self._create_fat_image_from_gen_script(input_dir, *args)
 
         def test(self):
-            self._run_test(input_path, create_fat_image)
+            self._run_test(input_dir, create_fat_image)
 
-        meth_name = 'test_' + input_path.stem.replace('-', '_')
+        meth_name = 'test_' + input_dir.stem.replace('-', '_')
         setattr(cls, meth_name, test)
 
-    def _run_test(self, input_path, create_fat_image):
-        tool_runner = ToolRunner(self, input_path)
+    def _run_test(self, input_dir, create_fat_image):
+        tool_runner = ToolRunner(self, input_dir)
         tool_runner.clean()
         with tempfile.TemporaryDirectory() as temp_dir_name:
             temp_dir = pathlib.Path(temp_dir_name)
@@ -212,17 +209,18 @@ class OfsConvertTest(unittest.TestCase):
         self.assertNotIn(NOT_ENOUGH_CLUSTERS_MSG, stderr,
                          'Too few clusters specified for FAT32')
 
-    def _create_fat_image_from_gen_script(self, script_path, temp_dir,
+    def _create_fat_image_from_gen_script(self, input_dir, temp_dir,
                                           tool_runner, image_mounter):
         image_file_path = temp_dir / 'fat.img'
-        args_file = script_path.parent / (script_path.stem + '.mkfs')
+        args_file = input_dir / 'mkfs.args'
         mkfs_call = 'mkfs.fat {} {}'.format(image_file_path,
                                             args_file.read_text().rstrip('\n'))
         tool_runner.run(mkfs_call, 'mkfs.fat', shell=True,
                         custom_error_checker=self._check_mkfs_fat_errors)
         with image_mounter.mount(image_file_path,
                                  FsType.VFAT, False) as mount_point:
-            tool_runner.run([str(script_path), str(mount_point)], 'gen script')
+            tool_runner.run([str(input_dir / 'generate.sh'), str(mount_point)],
+                            'gen script')
         return image_file_path
 
 
