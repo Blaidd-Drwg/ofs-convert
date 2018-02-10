@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 #include "ext4_bg.h"
-#include "ext4_inode.h"
 #include "util.h"
 #include "visualizer.h"
 
@@ -33,6 +32,11 @@ uint32_t inode_table_blocks() {
 }
 
 
+bool block_group_has_sb_copy(uint32_t bg_num) {
+    return bg_num == 0 || bg_num == sb.s_backup_bgs[0] || bg_num == sb.s_backup_bgs[1];
+}
+
+
 uint32_t block_group_overhead(bool has_sb_copy) {
     if (has_sb_copy) {
         return 3 + gdt_block_count() + sb.s_reserved_gdt_blocks + inode_table_blocks();
@@ -43,8 +47,7 @@ uint32_t block_group_overhead(bool has_sb_copy) {
 
 
 uint32_t block_group_overhead(uint32_t bg_num) {
-    bool has_sb_copy = bg_num == 0 || bg_num == sb.s_backup_bgs[0] || bg_num == sb.s_backup_bgs[1];
-    return block_group_overhead(has_sb_copy);
+    return block_group_overhead(block_group_has_sb_copy(bg_num));
 }
 
 
@@ -70,7 +73,7 @@ fat_extent *create_block_group_meta_extents(uint32_t bg_count) {
             extents[i] = {0, static_cast<uint16_t>(bg_overhead), start_cluster};
         } else {
             // extent would begin before first data cluster
-            uint32_t end_cluster = e4blk_to_fat_cl(block_group_start(i) + bg_overhead);
+            uint32_t end_cluster = e4blk_to_fat_cl(bg_start + bg_overhead);
             if (end_cluster) {
                 extents[i] = {0, static_cast<uint16_t>(end_cluster - FAT_START_INDEX), FAT_START_INDEX};
             } else {
@@ -101,11 +104,18 @@ void init_ext4_group_descs() {
         uint64_t bg_start_block = block_group_start(i);
         uint32_t block_count = block_group_block_count(i);
         uint32_t used_inodes = i == 0 ? EXT4_FIRST_NON_RSV_INODE : 0;
-        uint32_t bg_overhead = block_group_overhead(i);
+        bool has_sb_copy = block_group_has_sb_copy(i);
+        uint32_t bg_overhead = block_group_overhead(has_sb_copy);
 
-        uint64_t block_bitmap_block = bg_start_block + 1 + gdt_blocks + sb.s_reserved_gdt_blocks;
-        uint64_t inode_bitmap_block = bg_start_block + 2 + gdt_blocks + sb.s_reserved_gdt_blocks;
-        uint64_t inode_table_block = bg_start_block + 3 + gdt_blocks + sb.s_reserved_gdt_blocks;
+        uint64_t block_bitmap_block;
+        if (has_sb_copy) {
+            block_bitmap_block = bg_start_block + 1 + gdt_blocks + sb.s_reserved_gdt_blocks;
+        } else {
+            block_bitmap_block = bg_start_block;
+        }
+
+        uint64_t inode_bitmap_block = block_bitmap_block + 1;
+        uint64_t inode_table_block = block_bitmap_block + 2;
         set_lo_hi(bg.bg_block_bitmap_lo, bg.bg_block_bitmap_hi, block_bitmap_block);
         set_lo_hi(bg.bg_inode_bitmap_lo, bg.bg_inode_bitmap_hi, inode_bitmap_block);
         set_lo_hi(bg.bg_inode_table_lo, bg.bg_inode_table_hi, inode_table_block);
@@ -189,6 +199,18 @@ ext4_inode& get_existing_inode(uint32_t inode_num) {
 }
 
 
+void write_sb_copy(uint32_t bg_num) {
+    ext4_super_block sb_copy = sb;
+    sb_copy.s_block_group_nr = bg_num;
+    uint64_t bg_block_start = block_group_start(bg_num);
+    uint32_t sb_offset = (bg_num == 0 && block_size() != 1024) ? 1024 : 0;
+    memcpy(block_start(bg_block_start) + sb_offset, &sb_copy,
+           sizeof(ext4_super_block));
+    memcpy(block_start(bg_block_start + 1), group_descs,
+           block_group_count() * sizeof(ext4_group_desc));
+}
+
+
 void finalize_block_groups_on_disk() {
     uint32_t bg_count = block_group_count();
     for (uint16_t i = 0; i < bg_count; ++i) {
@@ -199,14 +221,7 @@ void finalize_block_groups_on_disk() {
                    from_lo_hi(bg.bg_free_blocks_count_lo, bg.bg_free_blocks_count_hi));
     }
 
-    ext4_super_block sb_copy = sb;
-    for (uint16_t i = 0; i < bg_count; ++i) {
-        sb_copy.s_block_group_nr = i;
-        uint64_t bg_block_start = block_group_start(i);
-        uint32_t sb_offset = (i == 0 && block_size() != 1024) ? 1024 : 0;
-        memcpy(block_start(bg_block_start) + sb_offset, &sb_copy,
-               sizeof(ext4_super_block));
-        memcpy(block_start(bg_block_start + 1), group_descs,
-               bg_count * sizeof(ext4_group_desc));
-    }
+    write_sb_copy(0);
+    write_sb_copy(sb.s_backup_bgs[0]);
+    write_sb_copy(sb.s_backup_bgs[1]);
 }
