@@ -130,7 +130,7 @@ void init_ext4_group_descs() {
 
         memset(block_bitmap, 0, blk_size);
         bitmap_set_bits(block_bitmap, 0, bg_overhead);
-        bitmap_set_bits(block_bitmap, block_count, sb.s_blocks_per_group);
+        bitmap_set_bits(block_bitmap, block_count, blk_size * 8);
         memset(inode_bitmap, 0, blk_size);
         bitmap_set_bits(inode_bitmap, 0, used_inodes);
         bitmap_set_bits(inode_bitmap, sb.s_inodes_per_group, blk_size * 8);

@@ -11,6 +11,10 @@
 #include <uuid/uuid.h>
 
 
+// Simplified because we don't use clusters
+constexpr uint32_t EXT4_MAX_BLOCKS_PER_GROUP = (1 << 16) - 8;
+
+
 ext4_super_block sb;
 
 
@@ -53,7 +57,7 @@ void init_ext4_sb() {
 
     sb.s_log_block_size = log2(bytes_per_block) - EXT4_BLOCK_SIZE_MIN_LOG2;
     sb.s_first_data_block = bytes_per_block == 1024 ? 1 : 0;
-    sb.s_blocks_per_group = bytes_per_block * 8;
+    sb.s_blocks_per_group = min(bytes_per_block * 8, EXT4_MAX_BLOCKS_PER_GROUP);
     uint64_t block_count = partition_bytes / bytes_per_block;
     set_lo_hi(sb.s_blocks_count_lo, sb.s_blocks_count_hi, block_count);
 
