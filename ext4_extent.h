@@ -4,6 +4,8 @@
 
 constexpr uint16_t EH_MAGIC = 0xF30A;
 
+constexpr uint16_t EXT4_MAX_INIT_EXTENT_LEN = 32768;
+
 struct fat_extent;
 struct fat_dentry;
 struct StreamArchiver;

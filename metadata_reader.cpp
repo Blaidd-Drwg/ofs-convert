@@ -1,3 +1,4 @@
+#include "ext4_extent.h"
 #include "fat.h"
 #include "visualizer.h"
 #include "stream-archiver.h"
@@ -128,7 +129,7 @@ void aggregate_extents(uint32_t cluster_no, bool is_dir_flag, StreamArchiver* wr
     while(cluster_no) {  // if cluster_no == 0, it's a zero-length file
         bool is_end = next_cluster_no >= FAT_END_OF_CHAIN,
              is_consecutive = next_cluster_no == current_extent.physical_start + current_extent.length,
-             has_max_length = current_extent.length == UINT16_MAX;
+             has_max_length = current_extent.length == EXT4_MAX_INIT_EXTENT_LEN;
         if(is_end || !is_consecutive || has_max_length) {
             find_blocked_extent_fragments(cluster_no, is_dir_flag, write_stream, current_extent);
             current_extent.logical_start += current_extent.length;
