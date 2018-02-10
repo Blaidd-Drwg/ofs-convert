@@ -9,7 +9,9 @@ struct BlockRange {
         FAT,
         OriginalPayload,
         ResettledPayload,
-        BlockGroupHeader
+        BlockGroupHeader,
+        Directory,
+        Extent
     } type;
     uint64_t begin, length, tag;
     BlockRange* next;

@@ -7,7 +7,9 @@ const char* type_colors[] = {
     "cyan",
     "green",
     "orange",
-    "blue"
+    "blue",
+    "purple",
+    "brown"
 };
 
 BlockRange* block_range = NULL;

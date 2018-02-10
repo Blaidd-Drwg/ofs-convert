@@ -36,7 +36,6 @@ int main(int argc, const char** argv) {
     aggregate_extents(boot_sector.root_cluster_no, &write_stream);
     traverse(&extent_stream, &write_stream);
 
-    visualizer_render_to_file("partition.svg", partition.fileStat.st_size / meta_info.cluster_size);
 
     init_ext4_group_descs();
     build_ext4_root();
@@ -45,4 +44,5 @@ int main(int argc, const char** argv) {
     finalize_block_groups_on_disk();
 
     closePartition(&partition);
+    visualizer_render_to_file("partition.svg", partition.fileStat.st_size / meta_info.cluster_size);
 }
