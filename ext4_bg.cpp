@@ -63,7 +63,8 @@ fat_extent *create_block_group_meta_extents(uint32_t bg_count) {
             exit(1);
         }
 
-        uint32_t start_cluster = e4blk_to_fat_cl(block_group_start(i));
+        uint64_t bg_start = block_group_start(i);
+        uint32_t start_cluster = e4blk_to_fat_cl(bg_start);
 
         if (start_cluster) {
             extents[i] = {0, static_cast<uint16_t>(bg_overhead), start_cluster};
@@ -77,7 +78,7 @@ fat_extent *create_block_group_meta_extents(uint32_t bg_count) {
                 extents[i] = {0, 0, 0};
             }
         }
-        visualizer_add_block_range({BlockRange::BlockGroupHeader, extents[i].physical_start, extents[i].length});
+        visualizer_add_block_range({BlockRange::BlockGroupHeader, bg_start, bg_overhead});
     }
 
     extents[bg_count] = {0, 1, static_cast<uint32_t>(block_count())};  // end of the filesystem

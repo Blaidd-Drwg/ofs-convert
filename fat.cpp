@@ -139,7 +139,11 @@ void set_meta_info(uint8_t *fs) {
     uint64_t fat_size = boot_sector.sectors_per_fat * boot_sector.bytes_per_sector;
     meta_info.fat_copy_start = (uint32_t *) malloc(fat_size);
     memcpy(meta_info.fat_copy_start, meta_info.fat_start, fat_size);
-    visualizer_add_block_range({BlockRange::FAT, boot_sector.sectors_before_fat, boot_sector.sectors_per_fat});
+    visualizer_add_block_range({
+        BlockRange::FAT,
+        boot_sector.sectors_before_fat / static_cast<uint64_t>(boot_sector.sectors_per_cluster),
+        boot_sector.sectors_per_fat * boot_sector.fat_count / static_cast<uint64_t>(boot_sector.sectors_per_cluster)
+    });
 
     if (meta_info.sectors_before_data % boot_sector.sectors_per_cluster != 0) {
         fprintf(stderr, "FAT clusters are not aligned. Cannot convert in-place");
