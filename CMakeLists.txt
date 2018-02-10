@@ -33,7 +33,8 @@ add_executable(ofs-convert
         util.cpp
         util.h
         visualizer.cpp
-        visualizer.h)
+        visualizer.h
+        visualizer_types.h)
 
 target_link_libraries(ofs-convert ${UUID_LIBRARIES})
 
