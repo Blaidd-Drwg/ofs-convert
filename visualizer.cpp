@@ -3,16 +3,24 @@
 #include <memory.h>
 #include <math.h>
 
+const char* type_names[] = {
+    #define ENTRY(name, color) #name,
+    #include "visualizer_types.h"
+    #undef ENTRY
+};
+
 const char* type_colors[] = {
-    "cyan",
-    "green",
-    "orange",
-    "blue",
-    "purple",
-    "brown"
+    #define ENTRY(name, color) color,
+    #include "visualizer_types.h"
+    #undef ENTRY
 };
 
 BlockRange* block_range = NULL;
+uint32_t resettled = 0, tag_count = 0, fragment_count = 0;
+
+void visualizer_add_tag(uint64_t tag) {
+    ++tag_count;
+}
 
 void visualizer_add_block_range(BlockRange source) {
 #ifdef VISUALIZER
@@ -20,7 +28,10 @@ void visualizer_add_block_range(BlockRange source) {
     memcpy(destination, &source, sizeof(BlockRange));
     destination->next = block_range;
     block_range = destination;
-    printf("visualizer_add_block_range %llu %llu\n", block_range->begin, block_range->length);
+    if(block_range->type == BlockRange::ResettledPayload)
+        resettled += block_range->length;
+    if(block_range->type == BlockRange::ResettledPayload || block_range->type == BlockRange::OriginalPayload)
+        ++fragment_count;
 #endif  // VISUALIZER
 }
 
@@ -32,11 +43,10 @@ void visualizer_render_to_file(const char* path, uint32_t block_count) {
         return;
     fputs("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n", output);
     fputs("<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n", output);
-    fprintf(output, "<svg viewBox=\"0 0 %d %d\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xml:space=\"preserve\">\n\t<g>\n", line_width, line_height*line_count+20);
+    fprintf(output, "<svg viewBox=\"0 0 %d %d\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xml:space=\"preserve\">\n\t<g>\n", line_width, line_height*(line_count+1)+20);
     for(uint32_t i = 0; i < line_count; ++i)
-        fprintf(output, "\t\t<path stroke-dasharray=\"5 5\" stroke=\"grey\" d=\"M0,%fH%d\"/>\n", line_height*(i+0.4), line_width);
+        fprintf(output, "\t\t<path stroke-width=\"2\" stroke-dasharray=\"5 5\" stroke=\"grey\" d=\"M0,%fH%d\"/>\n", line_height*(i+0.4), line_width);
     fputs("\t</g>\n\t<g shape-rendering=\"crispEdges\">\n", output);
-    uint32_t resettled = 0;
     while(block_range) {
         float begin = (float)line_width*line_count*block_range->begin/block_count,
               length = (float)line_width*line_count*block_range->length/block_count;
@@ -60,12 +70,15 @@ void visualizer_render_to_file(const char* path, uint32_t block_count) {
             ++line;
         }
 
-        if(block_range->type == BlockRange::ResettledPayload)
-            resettled += block_range->length;
         block_range = block_range->next;
     }
     fputs("\t</g>\n\t<g>\n", output);
-    fprintf(output, "\t\t<text x=\"10\" y=\"%d\" font-family=\"Verdana\">Blocks: %d x %d, Resettled: %d</text>\n", line_height*line_count+15, block_count/line_count, line_count, resettled);
+    for(uint32_t type = 0; type < sizeof(type_names)/sizeof(type_names[0]); ++type) {
+        uint32_t x = 250*type+5, y = line_height*line_count;
+        fprintf(output, "\t\t<rect x=\"%d\" y=\"%d\" width=\"%f\" height=\"%f\" fill=\"%s\"/>\n", x, y, line_height*0.8, line_height*0.8, type_colors[type]);
+        fprintf(output, "\t\t<text x=\"%d\" y=\"%d\" font-family=\"Verdana\">%s</text>\n", x+line_height, y+15, type_names[type]);
+    }
+    fprintf(output, "\t\t<text x=\"5\" y=\"%d\" font-family=\"Verdana\">Blocks: %d x %d, Fragmentation: %d / %d, Resettled: %d</text>\n", line_height*(line_count+1)+15, block_count/line_count, line_count, fragment_count, tag_count, resettled);
     fputs("\t</g>\n\t<script type=\"text/javascript\" xlink:href=\"visualizer.js\"/>\n", output);
     fputs("</svg>\n", output);
     fclose(output);

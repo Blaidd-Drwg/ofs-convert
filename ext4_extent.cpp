@@ -134,7 +134,7 @@ void register_extent(fat_extent *fext, uint32_t inode_no, bool add_to_extent_tre
     if (add_to_extent_tree) {
         add_extent(&eext, inode_no, inode);
     } else {
-        visualizer_add_block_range({BlockRange::Extent, from_lo_hi(eext.ee_start_lo, eext.ee_start_hi), eext.ee_len});
+        visualizer_add_block_range({BlockRange::IdxNode, from_lo_hi(eext.ee_start_lo, eext.ee_start_hi), eext.ee_len});
     }
 
     uint32_t block_count = static_cast<uint32_t>(eext.ee_len) * block_size() / 512;  // number of 512-byte blocks allocated

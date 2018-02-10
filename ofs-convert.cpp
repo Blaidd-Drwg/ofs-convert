@@ -33,7 +33,7 @@ int main(int argc, const char** argv) {
     StreamArchiver extent_stream = write_stream;
     StreamArchiver read_stream = write_stream;
 
-    aggregate_extents(boot_sector.root_cluster_no, &write_stream);
+    aggregate_extents(boot_sector.root_cluster_no, true, &write_stream);
     traverse(&extent_stream, &write_stream);
 
 

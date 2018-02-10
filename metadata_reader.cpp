@@ -78,18 +78,18 @@ uint32_t* reserve_children_count(StreamArchiver* write_stream) {
     return reinterpret_cast<uint32_t*>(ptr);
 }
 
-void resettle_extent(uint32_t cluster_no, StreamArchiver* write_stream, fat_extent& input_extent) {
+void resettle_extent(uint32_t cluster_no, bool is_dir_flag, StreamArchiver* write_stream, fat_extent& input_extent) {
     for(uint16_t i = 0; i < input_extent.length; ) {
         fat_extent fragment = allocate_extent(input_extent.length - i);
         fragment.logical_start = input_extent.logical_start + i;
         *reserve_extent(write_stream) = fragment;
         memcpy(cluster_start(fragment.physical_start), cluster_start(input_extent.physical_start + i), fragment.length * meta_info.cluster_size);
-        visualizer_add_block_range({BlockRange::ResettledPayload, fat_cl_to_e4blk(fragment.physical_start), fragment.length, cluster_no});
+        visualizer_add_block_range({(is_dir_flag) ? BlockRange::FAT : BlockRange::ResettledPayload, fat_cl_to_e4blk(fragment.physical_start), fragment.length, cluster_no});
         i += fragment.length;
     }
 }
 
-void find_blocked_extent_fragments(uint32_t cluster_no, StreamArchiver* write_stream, const fat_extent& input_extent) {
+void find_blocked_extent_fragments(uint32_t cluster_no, bool is_dir_flag, StreamArchiver* write_stream, const fat_extent& input_extent) {
     uint32_t input_physical_end = input_extent.physical_start + input_extent.length,
              fragment_physical_start = input_extent.physical_start,
              i = find_first_blocked_extent(input_extent.physical_start);
@@ -110,16 +110,18 @@ void find_blocked_extent_fragments(uint32_t cluster_no, StreamArchiver* write_st
         fragment.length = fragment_physical_end - fragment.physical_start;
         fragment.logical_start = input_extent.logical_start + (fragment.physical_start - input_extent.physical_start);
         fragment_physical_start = fragment_physical_end;
-        visualizer_add_block_range({BlockRange::OriginalPayload, fat_cl_to_e4blk(fragment.physical_start), fragment.length, cluster_no});
+        visualizer_add_block_range({(is_dir_flag) ? BlockRange::FAT : BlockRange::OriginalPayload, fat_cl_to_e4blk(fragment.physical_start), fragment.length, cluster_no});
 
         if(is_blocked)
-            resettle_extent(cluster_no, write_stream, fragment);
+            resettle_extent(cluster_no, is_dir_flag, write_stream, fragment);
         else
             *reserve_extent(write_stream) = fragment;
     }
 }
 
-void aggregate_extents(uint32_t cluster_no, StreamArchiver* write_stream) {
+void aggregate_extents(uint32_t cluster_no, bool is_dir_flag, StreamArchiver* write_stream) {
+    if(!is_dir_flag)
+        visualizer_add_tag(cluster_no);
     fat_extent current_extent {0, 1, cluster_no};
     uint32_t next_cluster_no = *fat_entry(cluster_no);
 
@@ -128,7 +130,7 @@ void aggregate_extents(uint32_t cluster_no, StreamArchiver* write_stream) {
              is_consecutive = next_cluster_no == current_extent.physical_start + current_extent.length,
              has_max_length = current_extent.length == UINT16_MAX;
         if(is_end || !is_consecutive || has_max_length) {
-            find_blocked_extent_fragments(cluster_no, write_stream, current_extent);
+            find_blocked_extent_fragments(cluster_no, is_dir_flag, write_stream, current_extent);
             current_extent.logical_start += current_extent.length;
             current_extent.length = 1;
             current_extent.physical_start = next_cluster_no;
@@ -176,8 +178,9 @@ void traverse(StreamArchiver* dir_extent_stream, StreamArchiver* write_stream) {
 
         uint32_t cluster_no = file_cluster_no(current_dentry);
         StreamArchiver read_extent_stream = *write_stream;
-        aggregate_extents(cluster_no, write_stream);
-        if (is_dir(current_dentry)) {
+        bool is_dir_flag = is_dir(current_dentry);
+        aggregate_extents(cluster_no, is_dir_flag, write_stream);
+        if (is_dir_flag) {
             traverse(&read_extent_stream, write_stream);
         } else {
             *reserve_children_count(write_stream) = -1;

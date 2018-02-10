@@ -58,8 +58,8 @@ void build_lost_found() {
     register_extent(&lost_found_dentry_extent, EXT4_LOST_FOUND_INODE);
     set_size(EXT4_LOST_FOUND_INODE, block_size());
 
-    visualizer_add_block_range({BlockRange::Directory, fat_cl_to_e4blk(root_dentry_extent.physical_start), 1});
-    visualizer_add_block_range({BlockRange::Directory, fat_cl_to_e4blk(lost_found_dentry_extent.physical_start), 1});
+    visualizer_add_block_range({BlockRange::Ext4Dir, fat_cl_to_e4blk(root_dentry_extent.physical_start), 1});
+    visualizer_add_block_range({BlockRange::Ext4Dir, fat_cl_to_e4blk(lost_found_dentry_extent.physical_start), 1});
 }
 
 void build_ext4_metadata_tree(uint32_t dir_inode_no, uint32_t parent_inode_no, StreamArchiver *read_stream) {
@@ -85,7 +85,7 @@ void build_ext4_metadata_tree(uint32_t dir_inode_no, uint32_t parent_inode_no, S
             previous_dentry->rec_len += block_size() - position_in_block;
 
             register_extent(&dentry_extent, dir_inode_no);
-            visualizer_add_block_range({BlockRange::Directory, fat_cl_to_e4blk(dentry_extent.physical_start), 1});
+            visualizer_add_block_range({BlockRange::Ext4Dir, fat_cl_to_e4blk(dentry_extent.physical_start), 1});
 
             dentry_extent = allocate_extent(1);
             dentry_extent.logical_start = block_count++;
@@ -112,6 +112,6 @@ void build_ext4_metadata_tree(uint32_t dir_inode_no, uint32_t parent_inode_no, S
     }
 
     register_extent(&dentry_extent, dir_inode_no);
-    visualizer_add_block_range({BlockRange::Directory, fat_cl_to_e4blk(dentry_extent.physical_start), 1});
+    visualizer_add_block_range({BlockRange::Ext4Dir, fat_cl_to_e4blk(dentry_extent.physical_start), 1});
     set_size(dir_inode_no, block_count * block_size());
 }
