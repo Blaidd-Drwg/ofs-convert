@@ -134,7 +134,7 @@ void register_extent(fat_extent *fext, uint32_t inode_no, bool add_to_extent_tre
         add_extent(&eext, inode_no, inode);
     }
 
-    uint16_t block_count = eext.ee_len * block_size() / 512;  // number of 512-byte blocks allocated
+    uint32_t block_count = static_cast<uint32_t>(eext.ee_len) * block_size() / 512;  // number of 512-byte blocks allocated
     incr_lo_hi(inode->i_blocks_lo, inode->l_i_blocks_high, block_count);
 
     uint64_t extent_start_block = from_lo_hi(eext.ee_start_lo, eext.ee_start_hi);
