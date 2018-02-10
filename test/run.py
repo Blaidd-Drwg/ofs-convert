@@ -23,10 +23,10 @@ class OfsConvertTest(unittest.TestCase):
         tests_dir = pathlib.Path(tests_dir)
         input_dirs = (e for e in tests_dir.glob('**/*.test') if e.is_dir())
         for input_dir in input_dirs:
-            cls._add_test_method(input_dir, tool_timeout)
+            cls._add_test_method(tests_dir, input_dir, tool_timeout)
 
     @classmethod
-    def _add_test_method(cls, input_dir, tool_timeout):
+    def _add_test_method(cls, tests_dir, input_dir, tool_timeout):
         fat_image_path = input_dir / 'fat.img'
         if fat_image_path.exists():
             def create_fat_image(*_args):
@@ -38,7 +38,9 @@ class OfsConvertTest(unittest.TestCase):
         def test(self):
             self._run_test(input_dir, create_fat_image, tool_timeout)
 
-        meth_name = 'test_' + input_dir.stem.replace('-', '_')
+        rel_path = input_dir.relative_to(tests_dir)
+        parts = list(rel_path.parent.parts) + [rel_path.stem]
+        meth_name = 'test_' + '__'.join(p.replace('-', '_') for p in parts)
         setattr(cls, meth_name, test)
 
     def _run_test(self, input_dir, create_fat_image, tool_timeout):
