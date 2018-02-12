@@ -58,7 +58,7 @@ class OfsConvertTest(unittest.TestCase):
                 self._run_fsck_ext4(tool_runner, ext4_image_path)
                 self._check_contents(tool_runner, image_mounter, fat_image_path,
                                      ext4_image_path)
-            except AssertionError:
+            except Exception:
                 tool_runner.write_output()
                 raise
 
