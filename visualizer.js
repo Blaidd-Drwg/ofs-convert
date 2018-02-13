@@ -13,8 +13,9 @@ for(const rect of document.getElementsByTagName('rect')) {
     rect.onclick = function(event) {
         deselect();
         for(const rect of group) {
+            const color = window.getComputedStyle(rect).fill.substr(4).split(', ').map(x => parseInt(x)*0.5);
             prevColors.set(rect, rect.getAttribute('fill'));
-            rect.setAttribute('fill', 'black');
+            rect.setAttribute('fill', 'rgb('+Math.round(color[0])+', '+Math.round(color[1])+', '+Math.round(color[2])+')');
         }
         event.stopPropagation();
     };
