@@ -29,7 +29,7 @@ uint32_t *fat_entry(uint32_t cluster_no) {
 }
 
 uint8_t *cluster_start(uint32_t cluster_no) {
-    return meta_info.data_start + (cluster_no - FAT_START_INDEX) * meta_info.cluster_size;
+    return meta_info.data_start + (cluster_no - FAT_START_INDEX) * static_cast<uint64_t>(meta_info.cluster_size);
 }
 
 bool is_free_cluster(uint32_t cluster_entry) {
