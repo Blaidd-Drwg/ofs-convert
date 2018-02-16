@@ -146,10 +146,10 @@ void register_extent(fat_extent *fext, uint32_t inode_no, bool add_to_extent_tre
 
 void set_extents(uint32_t inode_number, fat_dentry *dentry, StreamArchiver *read_stream) {
     set_size(inode_number, dentry->file_size);
-    fat_extent *current_extent = (fat_extent *) iterateStreamArchiver(read_stream, false, sizeof *current_extent);
+    fat_extent *current_extent = getNext<fat_extent>(read_stream);
     while (current_extent != NULL) {
         register_extent(current_extent, inode_number);
-        current_extent = (fat_extent *) iterateStreamArchiver(read_stream, false, sizeof *current_extent);
+        current_extent = getNext<fat_extent>(read_stream);
     }
 }
 

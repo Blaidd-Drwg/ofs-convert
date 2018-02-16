@@ -19,11 +19,11 @@ void build_ext4_root() {
 }
 
 void skip_child_count(StreamArchiver *read_stream) {
-    while (iterateStreamArchiver(read_stream, false, sizeof(uint32_t))) ;
+    while (getNext<uint32_t>(read_stream)) ;
 }
 
 void skip_dir_extents(StreamArchiver *read_stream) {
-    while (iterateStreamArchiver(read_stream, false, sizeof(fat_extent))) ;
+    while (getNext<fat_extent>(read_stream)) ;
 }
 
 ext4_dentry *build_dot_dirs(uint32_t dir_inode_no, uint32_t parent_inode_no, uint8_t *dot_dentry_p) {
@@ -63,10 +63,11 @@ void build_lost_found() {
 }
 
 void build_ext4_metadata_tree(uint32_t dir_inode_no, uint32_t parent_inode_no, StreamArchiver *read_stream) {
+    StreamArchiver extent_stream = *read_stream;
     skip_dir_extents(read_stream);
-    uint32_t child_count = *(uint32_t*) iterateStreamArchiver(read_stream, false,
-                                                              sizeof child_count);
-    iterateStreamArchiver(read_stream, false, sizeof child_count);
+    uint32_t child_count = *getNext<uint32_t>(read_stream);
+    getNext<uint32_t>(read_stream);  // consume cut
+
     fat_extent dentry_extent = allocate_extent(1);
     dentry_extent.logical_start = 0;
     uint32_t block_count = 1;
@@ -76,9 +77,9 @@ void build_ext4_metadata_tree(uint32_t dir_inode_no, uint32_t parent_inode_no, S
     int position_in_block = 2 * EXT4_DOT_DENTRY_SIZE;
 
     for (uint32_t i = 0; i < child_count; i++) {
-        fat_dentry *f_dentry = (fat_dentry *) iterateStreamArchiver(read_stream, false,
-                                                                    sizeof *f_dentry);
-        iterateStreamArchiver(read_stream, false, sizeof *f_dentry);
+        fat_dentry *f_dentry = getNext<fat_dentry>(read_stream);
+        getNext<fat_dentry>(read_stream);  // consume cut
+
         uint32_t inode_number = build_inode(f_dentry);
         ext4_dentry *e_dentry = build_dentry(inode_number, read_stream);
         if (e_dentry->rec_len > block_size() - position_in_block) {

@@ -31,7 +31,7 @@ fat_dentry* next_dentry(StreamArchiver* extent_stream, cluster_read_state* state
                 state->cluster_dentry = 0;
                 ret = state->current_cluster;
             } else {
-                state->current_extent = reinterpret_cast<fat_extent*>(iterateStreamArchiver(extent_stream, false, sizeof(fat_extent)));
+                state->current_extent = getNext<fat_extent>(extent_stream);
                 if (!state->current_extent)
                     return NULL;
 
@@ -47,7 +47,7 @@ fat_dentry* next_dentry(StreamArchiver* extent_stream, cluster_read_state* state
 }
 
 fat_dentry* init_cluster_read_state(StreamArchiver* extent_stream, cluster_read_state* state) {
-    state->current_extent = reinterpret_cast<fat_extent*>(iterateStreamArchiver(extent_stream, false, sizeof(fat_extent)));
+    state->current_extent = getNext<fat_extent>(extent_stream);
     state->extent_cluster = 0;
     uint32_t cluster_no = state->current_extent->physical_start + state->extent_cluster;
     state->current_cluster = reinterpret_cast<fat_dentry*>(cluster_start(cluster_no));
