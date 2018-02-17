@@ -19,7 +19,8 @@ struct cluster_read_state {
 
 cluster_read_state init_read_state(extent_iterator iterator) {
     cluster_read_state state;
-    state.current_cluster = reinterpret_cast<fat_dentry *>(next_cluster(&iterator));
+    uint32_t cluster_no = next_cluster_no(&iterator);
+    state.current_cluster = cluster_no ? reinterpret_cast<fat_dentry *>(cluster_start(cluster_no)) : NULL;
     state.cluster_dentry = 0;
     state.iterator = iterator;
     return state;
