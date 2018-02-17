@@ -3,6 +3,7 @@
 #include "visualizer.h"
 #include "stream-archiver.h"
 #include "extent-allocator.h"
+#include "extent_iterator.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -11,48 +12,32 @@
 extern uint64_t pageSize;
 
 struct cluster_read_state {
-    fat_extent* current_extent;
-    uint32_t extent_cluster;
-    fat_dentry* current_cluster;
+    extent_iterator iterator;
     uint32_t cluster_dentry;
+    fat_dentry *current_cluster;
 };
 
-fat_dentry* next_dentry(StreamArchiver* extent_stream, cluster_read_state* state) {
-    fat_dentry* ret;
-    do {
-        state->cluster_dentry++;
-        if (state->cluster_dentry < meta_info.dentries_per_cluster) {
-            ret = state->current_cluster + state->cluster_dentry;
-        } else {
-            state->extent_cluster++;
-            if (state->extent_cluster < state->current_extent->length) {
-                uint32_t cluster_no = state->current_extent->physical_start + state->extent_cluster;
-                state->current_cluster = reinterpret_cast<fat_dentry*>(cluster_start(cluster_no));
-                state->cluster_dentry = 0;
-                ret = state->current_cluster;
-            } else {
-                state->current_extent = getNext<fat_extent>(extent_stream);
-                if (!state->current_extent)
-                    return NULL;
-
-                state->extent_cluster = 0;
-                uint32_t cluster_no = state->current_extent->physical_start;
-                state->current_cluster = reinterpret_cast<fat_dentry*>(cluster_start(cluster_no));
-                state->cluster_dentry = 0;
-                ret = state->current_cluster;
-            }
-        }
-    } while (is_invalid(ret) || is_dot_dir(ret));
-    return ret;
+cluster_read_state init_read_state(extent_iterator iterator) {
+    cluster_read_state state;
+    state.current_cluster = reinterpret_cast<fat_dentry *>(next_cluster(&iterator));
+    state.cluster_dentry = 0;
+    state.iterator = iterator;
+    return state;
 }
 
-fat_dentry* init_cluster_read_state(StreamArchiver* extent_stream, cluster_read_state* state) {
-    state->current_extent = getNext<fat_extent>(extent_stream);
-    state->extent_cluster = 0;
-    uint32_t cluster_no = state->current_extent->physical_start + state->extent_cluster;
-    state->current_cluster = reinterpret_cast<fat_dentry*>(cluster_start(cluster_no));
-    state->cluster_dentry = -1;  // dummy value that next_dentry will increment to 0
-    return next_dentry(extent_stream, state);
+fat_dentry* next_dentry(cluster_read_state* state) {
+    fat_dentry* ret;
+    do {
+        if (state->cluster_dentry >= meta_info.dentries_per_cluster)
+            *state = init_read_state(state->iterator);
+
+        if (!state->current_cluster)
+            return NULL;
+
+        ret = state->current_cluster + state->cluster_dentry;
+        state->cluster_dentry++;
+    } while (is_invalid(ret) || is_dot_dir(ret));
+    return ret;
 }
 
 void reserve_name(uint16_t* pointers[], int count, StreamArchiver* write_stream) {
@@ -148,16 +133,15 @@ fat_dentry* read_lfn(fat_dentry* first_entry, StreamArchiver* extent_stream, uin
     uint8_t* entry = reinterpret_cast<uint8_t*>(first_entry);
     for (int i = lfn_entry_count - 1; i >= 0; i--) {
         lfn_cpy(name[i], entry);
-        entry = reinterpret_cast<uint8_t*>(next_dentry(extent_stream, state));
+        entry = reinterpret_cast<uint8_t*>(next_dentry(state));
     }
     return reinterpret_cast<fat_dentry*>(entry);
 }
 
 void traverse(StreamArchiver* dir_extent_stream, StreamArchiver* write_stream) {
-    cluster_read_state state = {};
-
     uint32_t* children_count = reserve_children_count(write_stream);
-    fat_dentry* current_dentry = init_cluster_read_state(dir_extent_stream, &state);
+    cluster_read_state state = init_read_state(init(dir_extent_stream));
+    fat_dentry* current_dentry = next_dentry(&state);
 
     while (!is_dir_table_end(current_dentry)) {
         fat_dentry* dentry = reserve_dentry(write_stream);
@@ -188,7 +172,7 @@ void traverse(StreamArchiver* dir_extent_stream, StreamArchiver* write_stream) {
         }
 
         (*children_count)++;
-        current_dentry = next_dentry(dir_extent_stream, &state);
+        current_dentry = next_dentry(&state);
     }
 }
 

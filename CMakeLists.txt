@@ -19,6 +19,8 @@ add_executable(ofs-convert
         ext4_inode.h
         extent-allocator.cpp
         extent-allocator.h
+        extent_iterator.cpp
+        extent_iterator.h
         fat.cpp
         fat.h
         metadata_reader.cpp
