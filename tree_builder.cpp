@@ -63,21 +63,24 @@ void build_lost_found() {
     visualizer_add_block_range({BlockRange::Ext4Dir, fat_cl_to_e4blk(lost_found_dentry_extent.physical_start), 1});
 }
 
-uint32_t next_dir_cluster(extent_iterator *iterator) {
-    uint32_t ret = next_cluster_no(iterator);
-    return ret ? ret : allocate_extent(1).physical_start;
+uint64_t next_dir_block(extent_iterator *iterator) {
+    uint32_t cluster_no = next_cluster_no(iterator);
+    if (!cluster_no)
+        cluster_no = allocate_extent(1).physical_start;
+
+    return fat_cl_to_e4blk(cluster_no);
 }
 
-void register_dir_extent(uint32_t cluster_no, uint32_t logical_no, uint32_t inode_no) {
-    fat_extent extent = {logical_no, 1, cluster_no};
+void register_dir_extent(uint64_t block_no, uint32_t logical_no, uint32_t inode_no) {
+    fat_extent extent = {logical_no, 1, e4blk_to_fat_cl(block_no)};
     register_extent(&extent, inode_no);
 }
 
 void build_ext4_metadata_tree(uint32_t dir_inode_no, uint32_t parent_inode_no, StreamArchiver *read_stream) {
     StreamArchiver extent_stream = *read_stream;
     extent_iterator iterator = init(&extent_stream);
-    uint32_t dentry_cluster_no = next_dir_cluster(&iterator);
-    uint8_t *dentry_block_start = cluster_start(dentry_cluster_no);
+    uint64_t dentry_block_no = next_dir_block(&iterator);
+    uint8_t *dentry_block_start = block_start(dentry_block_no);
 
     skip_dir_extents(read_stream);
     uint32_t child_count = *getNext<uint32_t>(read_stream);
@@ -97,12 +100,12 @@ void build_ext4_metadata_tree(uint32_t dir_inode_no, uint32_t parent_inode_no, S
         if (e_dentry->rec_len > block_size() - position_in_block) {
             previous_dentry->rec_len += block_size() - position_in_block;
 
-            register_dir_extent(dentry_cluster_no, block_count - 1, dir_inode_no);
+            register_dir_extent(dentry_block_no, block_count - 1, dir_inode_no);
             block_count++;
-            visualizer_add_block_range({BlockRange::Ext4Dir, fat_cl_to_e4blk(dentry_cluster_no), 1});
+            visualizer_add_block_range({BlockRange::Ext4Dir, dentry_block_no, 1});
 
-            dentry_cluster_no = next_dir_cluster(&iterator);
-            dentry_block_start = cluster_start(dentry_cluster_no);
+            dentry_block_no = next_dir_block(&iterator);
+            dentry_block_start = block_start(dentry_block_no);
             position_in_block = 0;
         }
         previous_dentry = (ext4_dentry *) (dentry_block_start + position_in_block);
@@ -124,7 +127,7 @@ void build_ext4_metadata_tree(uint32_t dir_inode_no, uint32_t parent_inode_no, S
         previous_dentry->rec_len += block_size() - position_in_block;
     }
 
-    register_dir_extent(dentry_cluster_no, block_count - 1, dir_inode_no);
-    visualizer_add_block_range({BlockRange::Ext4Dir, fat_cl_to_e4blk(dentry_cluster_no), 1});
+    register_dir_extent(dentry_block_no, block_count - 1, dir_inode_no);
+    visualizer_add_block_range({BlockRange::Ext4Dir, dentry_block_no, 1});
     set_size(dir_inode_no, block_count * block_size());
 }
