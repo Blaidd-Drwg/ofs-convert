@@ -1,14 +1,20 @@
+#include "extent-allocator.h"
 #include "stream-archiver.h"
 #include <stdlib.h>
 #include <string.h>
 
 uint64_t pageSize;
 
+Page *allocatePage() {
+    uint8_t *page_start = cluster_start(allocate_extent(1).physical_start);
+    return reinterpret_cast<Page*>(page_start);
+}
+
 void cutStreamArchiver(StreamArchiver* stream) {
     if(stream->header && stream->page)
         stream->header->elementCount = stream->elementIndex;
     else {
-        stream->page = reinterpret_cast<Page*>(malloc(pageSize));
+        stream->page = allocatePage();
         stream->page->next = NULL;
         stream->offsetInPage = sizeof(Page);
     }
@@ -26,7 +32,7 @@ void* iterateStreamArchiver(StreamArchiver* stream, bool insert, uint64_t elemen
     uint64_t offsetInPage = stream->offsetInPage;
     if(stream->offsetInPage + elementLength > pageSize) {
         if(insert) {
-            Page* page = reinterpret_cast<Page*>(malloc(pageSize));
+            Page *page = allocatePage();
             stream->page->next = page;
             stream->page = page;
             stream->page->next = NULL;

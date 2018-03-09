@@ -141,6 +141,7 @@ fat_dentry* read_lfn(fat_dentry* first_entry, StreamArchiver* extent_stream, uin
 
 void traverse(StreamArchiver* dir_extent_stream, StreamArchiver* write_stream) {
     uint32_t* children_count = reserve_children_count(write_stream);
+    *children_count = 0;
     cluster_read_state state = init_read_state(init(dir_extent_stream));
     fat_dentry* current_dentry = next_dentry(&state);
 
@@ -177,8 +178,8 @@ void traverse(StreamArchiver* dir_extent_stream, StreamArchiver* write_stream) {
     }
 }
 
-void init_stream_archiver(StreamArchiver* stream) {
-    pageSize = 4096;
+void init_stream_archiver(StreamArchiver* stream, uint32_t clusterSize) {
+    pageSize = clusterSize;
     memset(stream, 0, sizeof *stream);
     cutStreamArchiver(stream);
 }

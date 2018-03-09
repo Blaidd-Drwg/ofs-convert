@@ -29,7 +29,7 @@ int main(int argc, const char** argv) {
     init_extent_allocator(create_block_group_meta_extents(bg_count), bg_count);
 
     StreamArchiver write_stream;
-    init_stream_archiver(&write_stream);
+    init_stream_archiver(&write_stream, meta_info.cluster_size);
     StreamArchiver extent_stream = write_stream;
     StreamArchiver read_stream = write_stream;
 
