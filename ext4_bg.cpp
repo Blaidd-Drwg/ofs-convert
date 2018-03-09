@@ -84,7 +84,7 @@ fat_extent *create_block_group_meta_extents(uint32_t bg_count) {
         visualizer_add_block_range({BlockRange::BlockGroupHeader, bg_start, bg_overhead});
     }
 
-    extents[bg_count] = {0, 1, static_cast<uint32_t>(block_count())};  // end of the filesystem
+    extents[bg_count] = {0, 1, static_cast<uint32_t>(data_cluster_count())};  // end of the filesystem
 
     return extents;
 }

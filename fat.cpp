@@ -157,8 +157,7 @@ uint32_t sector_count() {
 }
 
 uint32_t data_cluster_count() {
-    // TODO check if correct
-    return ((sector_count() - boot_sector.sectors_before_fat) / boot_sector.sectors_per_cluster) + FAT_START_INDEX;
+    return ((sector_count() - meta_info.sectors_before_data) / boot_sector.sectors_per_cluster) + FAT_START_INDEX;
 }
 
 void read_volume_label(uint8_t* out) {
