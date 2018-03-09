@@ -25,7 +25,7 @@ uint32_t e4blk_to_fat_cl(uint64_t block_no) {
 }
 
 uint32_t *fat_entry(uint32_t cluster_no) {
-    return meta_info.fat_copy_start + cluster_no;
+    return meta_info.fat_start + cluster_no;
 }
 
 uint8_t *cluster_start(uint32_t cluster_no) {
@@ -136,9 +136,7 @@ void set_meta_info(uint8_t *fs) {
     meta_info.dentries_per_cluster = meta_info.cluster_size / sizeof(struct fat_dentry);
     meta_info.sectors_before_data = boot_sector.sectors_before_fat + boot_sector.sectors_per_fat * boot_sector.fat_count;
     meta_info.data_start = fs + meta_info.sectors_before_data * boot_sector.bytes_per_sector;
-    uint64_t fat_size = boot_sector.sectors_per_fat * boot_sector.bytes_per_sector;
-    meta_info.fat_copy_start = (uint32_t *) malloc(fat_size);
-    memcpy(meta_info.fat_copy_start, meta_info.fat_start, fat_size);
+
     visualizer_add_block_range({
         BlockRange::FAT,
         boot_sector.sectors_before_fat / static_cast<uint64_t>(boot_sector.sectors_per_cluster),
@@ -156,6 +154,11 @@ uint32_t sector_count() {
            ? boot_sector.total_sectors2
            : boot_sector.sector_count;
 
+}
+
+uint32_t data_cluster_count() {
+    // TODO check if correct
+    return ((sector_count() - boot_sector.sectors_before_fat) / boot_sector.sectors_per_cluster) + FAT_START_INDEX;
 }
 
 void read_volume_label(uint8_t* out) {

@@ -27,6 +27,7 @@ bool is_free_cluster(uint32_t cluster_entry);
 void lfn_cpy(uint16_t *dest, uint8_t *src);
 void read_short_name(struct fat_dentry *dentry, uint16_t *name);
 uint32_t sector_count();
+uint32_t data_cluster_count();
 void read_volume_label(uint8_t* out);
 
 
@@ -85,7 +86,6 @@ struct meta_info {
     uint32_t dentries_per_cluster;
     uint32_t sectors_before_data;
     uint8_t* data_start;
-    uint32_t* fat_copy_start;
 };
 
 struct fat_dentry {
