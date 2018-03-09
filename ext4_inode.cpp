@@ -37,7 +37,6 @@ uint32_t build_inode(fat_dentry *dentry) {
     inode.i_flags = 0x80000;  // uses extents
     inode.ext_header = init_extent_header();
 
-    // TODO checksum
     return save_inode(&inode);
 }
 
@@ -56,7 +55,6 @@ void build_root_inode() {
     inode.i_flags = 0x80000;  // uses extents
     inode.ext_header = init_extent_header();
 
-    // TODO checksum
     add_reserved_inode(inode, EXT4_ROOT_INODE);
 }
 
@@ -73,7 +71,6 @@ void build_lost_found_inode() {
     inode.i_flags = 0x80000;  // uses extents
     inode.ext_header = init_extent_header();
 
-    // TODO checksum
     add_reserved_inode(inode, EXT4_LOST_FOUND_INODE);
 }
 

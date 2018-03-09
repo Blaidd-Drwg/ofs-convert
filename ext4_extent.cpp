@@ -58,10 +58,6 @@ bool append_in_block(ext4_extent_header *header, ext4_extent *ext) {
     if (header->eh_entries >= header->eh_max) return false;
 
     ext4_extent *new_entry = (ext4_extent *) (header + header->eh_entries + 1);
-    // move tail
-    memcpy(new_entry + 1, new_entry, sizeof(ext4_extent_tail));
-    // TODO update tail
-
     memcpy(new_entry, ext, sizeof *ext);
     header->eh_entries++;
     return true;
@@ -104,12 +100,9 @@ void make_tree_deeper(ext4_extent_header *root_header, uint32_t inode_no) {
     ext4_extent_header *child_header = (ext4_extent_header *) child_block;
     child_header->eh_max = max_entries();
 
-    ext4_extent_tail *child_tail = (ext4_extent_tail *) (child_header + 5);
-    // TODO create tail
     root_header->eh_depth++;
     root_header->eh_entries = 1;
     ext4_extent_idx *idx = (ext4_extent_idx *) (root_header + 1);
-    ext4_extent *child_first_extent = (ext4_extent *)(child_header + 1);  // could also be idx, irrelevant
     idx->ei_block = 0;
     set_lo_hi(idx->ei_leaf_lo, idx->ei_leaf_hi, block_no);
 }
