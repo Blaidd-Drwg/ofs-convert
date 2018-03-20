@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <cstdio>
 
+#include "visualizer.h"
+
 extent_allocator allocator;
 uint8_t *allocation_bitmap;
 
@@ -72,6 +74,8 @@ fat_extent allocate_extent(uint16_t max_length) {
         result.length = allocator.index_in_fat - result.physical_start + 1;
         set_used(allocator.index_in_fat);
     }
+
+    visualizer_add_allocated_extent(result);
     return result;
 }
 

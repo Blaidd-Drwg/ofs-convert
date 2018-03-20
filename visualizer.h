@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "fat.h"
+
 struct BlockRange {
     enum Type {
         #define ENTRY(name, color) name,
@@ -14,6 +16,7 @@ struct BlockRange {
     BlockRange* next;
 };
 
+void visualizer_add_allocated_extent(const fat_extent& extent);
 void visualizer_add_tag(uint64_t tag);
 void visualizer_add_block_range(BlockRange to_add);
 void visualizer_render_to_file(const char* path, uint32_t block_count);

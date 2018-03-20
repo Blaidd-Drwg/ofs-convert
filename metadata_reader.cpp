@@ -71,7 +71,10 @@ void resettle_extent(uint32_t cluster_no, bool is_dir_flag, StreamArchiver* writ
         fragment.logical_start = input_extent.logical_start + i;
         *reserve_extent(write_stream) = fragment;
         memcpy(cluster_start(fragment.physical_start), cluster_start(input_extent.physical_start + i), fragment.length * meta_info.cluster_size);
-        visualizer_add_block_range({(is_dir_flag) ? BlockRange::FAT : BlockRange::ResettledPayload, fat_cl_to_e4blk(fragment.physical_start), fragment.length, cluster_no});
+        if (!is_dir_flag) {
+            visualizer_add_block_range({BlockRange::ResettledPayload, fat_cl_to_e4blk(fragment.physical_start), fragment.length, cluster_no});
+        }
+
         i += fragment.length;
     }
 }
@@ -97,7 +100,9 @@ void find_blocked_extent_fragments(uint32_t cluster_no, bool is_dir_flag, Stream
         fragment.length = fragment_physical_end - fragment.physical_start;
         fragment.logical_start = input_extent.logical_start + (fragment.physical_start - input_extent.physical_start);
         fragment_physical_start = fragment_physical_end;
-        visualizer_add_block_range({(is_dir_flag) ? BlockRange::FAT : BlockRange::OriginalPayload, fat_cl_to_e4blk(fragment.physical_start), fragment.length, cluster_no});
+        if (!is_dir_flag) {
+            visualizer_add_block_range({BlockRange::OriginalPayload, fat_cl_to_e4blk(fragment.physical_start), fragment.length, cluster_no});
+        }
 
         if(is_blocked)
             resettle_extent(cluster_no, is_dir_flag, write_stream, fragment);
